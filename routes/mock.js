@@ -1,26 +1,34 @@
+var _ = require( 'underscore' );
+
+exports.model = {};
 
 exports.model.contacts = [ {
-	'Friedns': [{
+	'Friedns': [ {
 		"name":"A",
-		"phoneNumber":["000-0000-0001","000-0000-0002"]
-	}],
-	'Family': [{
+		"phoneNumber": [ "000-0000-0001","000-0000-0002" ]
+	}, {
+		"name": "B",
+		"phoneNumber": [ "000-0000-0003" ]
+	} ],
+	'Family': [ {
 		"name":"c",
-		"phoneNumber":["000-0000-0004"]
-	}]
-}];
+		"phoneNumber" : [ "000-0000-0004" ]
+	} ]
+} ];
 
 exports.index = function( req, res ) {
-	res.render('index', { title: 'Express' });
+	res.send( 'index', { title: 'Express' });
 };
 
 exports.contacts = function( req, res ) {
-	res.send( JSON.stringify( this.model.json, null, '\t' ) );
-}
+	res.send( JSON.stringify( exports.model.contacts, null, '\t' ) );
+};
 
+exports.category = function() {
+};
 exports.category.add = function( req, res ) {
 	var newCategory = JSON.parse( req.contents );
 	for ( prop in newCategory ) {
 		exports.model.contacts[prop] = newCategory[prop];
 	}
-}
+};

@@ -1,6 +1,7 @@
 
 // Module dependencies.
 var express = require( 'express' )
+, connect = require( 'connect' )
 , routes = require( './routes/mock' )
 , user = require( './routes/user' )
 , http = require( 'http' )
@@ -10,6 +11,7 @@ var app = express();
 
 app.configure(function(){
 	app.set( 'port', process.env.PORT || 3000 );
+	app.use( connect.compress() );
 	app.use( express.favicon() );
 	app.use( express.logger('dev') );
 	app.use( express.bodyParser() );
@@ -32,7 +34,6 @@ app.configure( 'product', function() {
 });
 
 // Register url mapping
-app.get( '/', routes.index );
 app.get( '/users', user.list );
 app.get( '/contacts', routes.contacts );
 app.post( '/categories', routes.category.add );

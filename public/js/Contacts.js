@@ -15,7 +15,20 @@
 		},
 		parse: function( res ) {
 			debug( 'Parse: ' + res );
-			return _.map( res, function( category ) {
+			ret = [];
+			_.each( res, function( category ) {
+				debug( 'Category :' + category );
+				for ( prop in category ) {
+					var c = {};
+					c['name'] = prop;
+					c['contacts'] = category[prop];
+
+					debug( category[prop] );
+					
+					ret.push( c );
+				}
+			} );
+			return _.map( ret, function( category ) {
 				c = new Category( category );
 				return c;
 			} );
@@ -76,6 +89,22 @@
 			this.resetCategory();
 			return this.contents;
 		},
+		createFooter: function() {
+			debug( 'Create footer' );
+			this.footer = $( '<div id="footer"></div>' );
+			this.footer.append( new Button( {
+				name: '+',
+				model: new Command( {
+					execute: function() {
+
+						$.post( '/categories', function( data ) {
+						} );
+					}
+				} )
+		   	} ).render().el );
+			return this.footer;
+		},
+
 		resetCategory: function() {
 			debug( 'Reset' );
 			this.collection.each( function( category ) {

@@ -1,9 +1,5 @@
 ( function() {
 
-	Command = Model.extend( {
-		// -execute
-	} );
-
 	DialogView = View.extend( {
 		// +open
 		// -createDialogArea
@@ -35,6 +31,7 @@
 				title: this.getTitle(),
 				modalOpacity: 0.5,
 				content: this.createContents(),
+				footerContent: this.createFooter(),
 				checkBoundary: true,
 				resizable: true
 			} );
@@ -70,10 +67,10 @@
 		onClick: function() {
 			trace( 'Click ' + this.model.get( 'name' ) );
 			var command = this.model.get( 'command' );
-			if ( command && command.execute ) {
+			if ( command || command.execute ) {
 				command.execute();
 			} else {
-				warn( 'No command' );
+				warn( 'No command: ' + command );
 			}
 		}
 

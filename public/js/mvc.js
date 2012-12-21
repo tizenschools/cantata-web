@@ -48,7 +48,7 @@
 	warn = Logger.dummy;
 	error = Logger.dummy;
 
-	//trace = Logger.trace;
+	trace = Logger.trace;
 	debug = Logger.debug;
 	info = Logger.info;
 	warn = Logger.warn;
@@ -112,6 +112,13 @@
 	} );
 	Collection = Backbone.Collection.extend( { } );
 
+	Command = Model.extend( {
+		initialize: function() {
+			this.execute = this.execute || this.get( 'execute' ) || function() {};
+		}
+		// -execute
+	} );
+
 	Button = View.extend( {
 		tagName: 'a',
 		className: 'btn',
@@ -125,7 +132,8 @@
 			return this;
 		},
 		onClick: function() {
-			if ( this.model && this.model.canExecute && this.model.canExecute() ) {
+			trace( 'onClick' );
+			if ( this.model && this.model.execute ) {
 				this.model.execute();
 			}
 		}
