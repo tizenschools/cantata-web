@@ -1,0 +1,9 @@
+.icon {
+	text-align: center;
+	margin: 50px;
+}
+.icon:hover {
+	cursor: pointer;
+}
+
+
