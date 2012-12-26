@@ -36,6 +36,7 @@ app.configure( 'product', function() {
 // Register url mapping
 app.get( '/users', user.list );
 app.get( '/contacts', routes.contacts );
+
 app.post( '/categories', routes.category.add );
 
 // Start server
