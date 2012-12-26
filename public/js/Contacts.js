@@ -1,5 +1,7 @@
 ( function() {
+
 	Contact = Model.extend( {} );
+
 	Category = Model.extend( {
 		initialize: function( options ) {
 			this.set( 'name', options.name );
@@ -8,6 +10,7 @@
 			} ) ) );
 		},
 	} );
+
 	Categories = Collection.extend( {
 		model: Category,
 		url: function() {
@@ -96,9 +99,11 @@
 				name: '+',
 				model: new Command( {
 					execute: function() {
+						dialog = new NewCategoryDialogView( { model: new AddNewCategory() } );
+						dialog.open();
 
-						$.post( '/categories', function( data ) {
-						} );
+//						$.post( '/categories', function( data ) {
+//						} );
 					}
 				} )
 		   	} ).render().el );
@@ -125,5 +130,30 @@
 		},
 	} );
 
+	AddNewCategory = Command.extend( {
+		execute: function() {
+			console.log( 'Add new category' );
+		}
+	} );
+
+	NewCategoryDialogView = DialogView.extend( {
+		contentsTemplate:
+		'<form class="form-horizontal">' +
+			'<fieldset>' +
+				'<div class="control-group">' +
+					'<label class="control-label" for="input01">Name</label>' +
+					'<div class="controls">' +
+						'<input placeholder="Input category name" class="input-xlarge" type="text">' +
+						'<p class="help-block"></p>' +
+					'</div>' +
+				'</div>' +
+			'</fieldset>' +
+		'</form>',
+
+		createContents: function() {
+			return this.template( this.model, this.contentsTemplate );
+		}
+
+	} );
 
 } ) ();

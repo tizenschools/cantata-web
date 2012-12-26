@@ -1,9 +1,5 @@
 ( function() {
 
-	DialogView = View.extend( {
-		// +open
-		// -createDialogArea
-	} );
 	LoginDialogView = DialogView.extend( {
 		// +createDialogArea
 	} );
@@ -27,7 +23,7 @@
 				animationSpeed: 500,
 				minWinLong: 180
 			} );
-			this.wnd = $.window( {
+			this.wnd = this.$el.window( {
 				title: this.getTitle(),
 				modalOpacity: 0.5,
 				content: this.createContents(),
@@ -93,7 +89,7 @@
 	OpenContacts = Command.extend( {
 		execute: function() {
 			var categories = new Categories();
-			var categoriesView = new CategoriesView( { collection: categories } );
+			var categoriesView = new CategoriesView( { el: $( '#background' ), collection: categories } );
 			categoriesView.render();
 		}
 	} );

@@ -64,8 +64,8 @@
 			}
 			this.$el.html( this.template( this.model ) );
 		},
-		template: function( model ) {
-			var temp = this.defaultTemplate;
+		template: function( model, template ) {
+			var temp = template;
 			if ( this.templateId ) {
 				temp = $( this.templateId ).html();
 				if ( !temp ) {
@@ -77,7 +77,7 @@
 				return "";
 			}
 			if ( !model ) {
-				info( "No model" );
+				info( "No model: {0}", temp );
 				return temp;
 			}
 
@@ -114,7 +114,9 @@
 
 	Command = Model.extend( {
 		initialize: function() {
-			this.execute = this.execute || this.get( 'execute' ) || function() {};
+			if ( !this.execute ) {
+				this.execute = this.get( 'execute' );
+			}
 		}
 		// -execute
 	} );
@@ -150,6 +152,82 @@
 		selectionChanged: function( selection ) {
 		}
 	};
+
+	DialogView = View.extend( {
+
+		headerTemplate:
+		'<div class="modal-header">' +
+			'<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>' +
+			'<h3>New Category</h3>' +
+		'</div>',
+
+		bodyTemplate:
+		'<div class="modal-body">' +
+		'</div>',
+
+		footerTemplate:
+		'<div class="modal-footer">' +
+			'<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>' +
+			'<button class="btn btn-primary" id="ok">OK</button>' +
+		'</div>',
+
+		className: 'modal hide fade',
+
+		initialize: function( options ) {
+			that = this;
+			this.header = this.createHeader();
+			this.body = this.createBody();
+			this.footer = this.createFooter();
+
+			this.footer.find( '#ok' ).click( function() {
+				console.log( "Ok clicked" );
+				if ( that.model && that.model.execute ) {
+					that.model.execute();
+				}
+
+				that.close();
+			} );
+		},
+
+		render: function() {
+			this.$el.append( this.header );
+			this.$el.append( this.body );
+			this.$el.append( this.footer );
+
+			that = this;
+			this.$el.modal( {
+				backdrop: 'static',
+				keyboard: false
+			} ).on( 'hidden', function() {
+				that.close();
+			} );
+		},
+
+		createHeader: function() {
+			return $( this.template( this.model, this.headerTemplate ) );
+		},
+
+		createBody: function() {
+			var body = $( this.template( this.model, this.bodyTemplate ) );
+			body.append( this.createContents() );
+			return body;
+		},
+
+		createFooter: function() {
+			return $( this.template( this.model, this.footerTemplate ) );
+		},
+
+		open: function( callbaack ) {
+			this.render();
+			this.callback = callbaack;
+			this.$el.modal( 'show' );
+		},
+
+		close: function() {
+			this.$el.modal( 'hide' );
+			this.remove();
+		},
+	} );
 
 } ) ();
 
