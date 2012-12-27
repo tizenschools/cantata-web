@@ -1,4 +1,5 @@
 var _ = require( 'underscore' );
+var osp = require( './tizen-native.node' );
 
 exports.model = {};
 
@@ -21,7 +22,10 @@ exports.index = function( req, res ) {
 };
 
 exports.contacts = function( req, res ) {
-	res.send( JSON.stringify( exports.model.contacts, null, '\t' ) );
+    contacts = new osp.Contacts();
+    console.log( JSON.stringify( contacts.list() ) );     
+	res.send( JSON.stringify( contacts.list() ) );     
+	/*res.send( JSON.stringify( exports.model.contacts, null, '\t' ) );*/
 };
 
 exports.category = function() {
