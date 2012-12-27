@@ -1,0 +1,21 @@
+#!/bin/sh
+
+TARGET="`readlink -f .`"/target
+
+if [ -n "$1" ];
+then
+	TARGET=$1
+fi
+
+echo "Target: $TARGET"
+
+if ! [ -e $TARGET ];
+then
+	mkdir -p $TARGET
+fi
+
+cp -R routes $TARGET
+cp -R public $TARGET
+cp -R node_modules $TARGET
+cp app.js $TARGET
+
