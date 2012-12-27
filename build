@@ -1,5 +1,6 @@
 #!/bin/sh
-
+SCRIPT=`readlink -f $0`
+SOURCE=`dirname $SCRIPT`
 TARGET="`readlink -f .`"/target
 
 if [ -n "$1" ];
@@ -14,8 +15,8 @@ then
 	mkdir -p $TARGET
 fi
 
-cp -R routes $TARGET
-cp -R public $TARGET
-cp -R node_modules $TARGET
-cp app.js $TARGET
+cp -R $SOURCE/routes $TARGET
+cp -R $SOURCE/public $TARGET
+cp -R $SOURCE/node_modules $TARGET
+cp $SOURCE/app.js $TARGET
 
