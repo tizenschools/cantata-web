@@ -19,18 +19,16 @@
 		parse: function( res ) {
 			debug( 'Parse: ' + res );
 			ret = [];
-			_.each( res, function( category ) {
-				debug( 'Category :' + category );
-				for ( prop in category ) {
-					var c = {};
-					c['name'] = prop;
-					c['contacts'] = category[prop];
+			debug( 'Category :' + res );
+			for ( prop in res ) {
+				var c = {};
+				c['name'] = prop;
+				c['contacts'] = res[prop];
 
-					debug( category[prop] );
-					
-					ret.push( c );
-				}
-			} );
+				debug( res[prop] );
+				
+				ret.push( c );
+			}
 			return _.map( ret, function( category ) {
 				c = new Category( category );
 				return c;
@@ -101,9 +99,6 @@
 					execute: function() {
 						dialog = new NewCategoryDialogView( { model: new AddNewCategory() } );
 						dialog.open();
-
-//						$.post( '/categories', function( data ) {
-//						} );
 					}
 				} )
 		   	} ).render().el );
@@ -132,6 +127,14 @@
 
 	AddNewCategory = Command.extend( {
 		execute: function() {
+			$.ajax( {
+				type: 'POST',
+				url: '/categories',
+				data: { 'name': this.get( 'name' ) },
+				success: function( data ) {
+				}
+			} );
+
 			console.log( 'Add new category' );
 		}
 	} );
@@ -149,6 +152,18 @@
 				'</div>' +
 			'</fieldset>' +
 		'</form>',
+		done: function() {
+			this.model.set( 'name', this.$( 'input' ).val() );
+			DialogView.prototype.done();
+		},
+		onKeypress: function( e ) {
+			if ( 13 != e.keyCode ) {
+				return ;
+			}
+			
+			this.done();
+			return false;
+		},
 
 		createContents: function() {
 			return this.template( this.model, this.contentsTemplate );

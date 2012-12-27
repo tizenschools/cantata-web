@@ -1,28 +1,19 @@
 var _ = require( 'underscore' );
-var osp = require( './tizen-native.node' );
+var path = require( 'fs' );
 
-exports.model = {};
-
-exports.model.contacts = [ {
-	'Friedns': [ {
-		"name":"A",
-		"phoneNumber": [ "000-0000-0001","000-0000-0002" ]
-	}, {
-		"name": "B",
-		"phoneNumber": [ "000-0000-0003" ]
-	} ],
-	'Family': [ {
-		"name":"c",
-		"phoneNumber" : [ "000-0000-0004" ]
-	} ]
-} ];
+osp = null;
+if ( path.existsSync( './tizen-native.node' ) ) {
+	osp = require( './tizen-native.node' );
+} else {
+	osp = require( './tizen-native.js' );
+}
 
 exports.index = function( req, res ) {
 	res.send( 'index', { title: 'Express' });
 };
 
 exports.contacts = function( req, res ) {
-    contacts = new osp.Contacts();
+    var contacts = new osp.Contacts();
     console.log( JSON.stringify( contacts.list() ) );     
 	res.send( JSON.stringify( contacts.list() ) );     
 	/*res.send( JSON.stringify( exports.model.contacts, null, '\t' ) );*/
@@ -31,8 +22,7 @@ exports.contacts = function( req, res ) {
 exports.category = function() {
 };
 exports.category.add = function( req, res ) {
-	var newCategory = JSON.parse( req.contents );
-	for ( prop in newCategory ) {
-		exports.model.contacts[prop] = newCategory[prop];
-	}
+	console.log( 'Body: ' + req.body.name );
+	var contacts = new osp.Contacts();
+	contacts.add( req.body.name );
 };

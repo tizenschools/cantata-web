@@ -167,26 +167,18 @@
 
 		footerTemplate:
 		'<div class="modal-footer">' +
-			'<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>' +
-			'<button class="btn btn-primary" id="ok">OK</button>' +
+			'<button id="cancel" class="btn" data-dismiss="modal" aria-hidden="true">Close</button>' +
+			'<button id="ok" class="btn btn-primary">OK</button>' +
 		'</div>',
 
 		className: 'modal hide fade',
 
 		initialize: function( options ) {
 			that = this;
+			this.buttons = {};
 			this.header = this.createHeader();
 			this.body = this.createBody();
 			this.footer = this.createFooter();
-
-			this.footer.find( '#ok' ).click( function() {
-				console.log( "Ok clicked" );
-				if ( that.model && that.model.execute ) {
-					that.model.execute();
-				}
-
-				that.close();
-			} );
 		},
 
 		render: function() {
@@ -214,13 +206,32 @@
 		},
 
 		createFooter: function() {
-			return $( this.template( this.model, this.footerTemplate ) );
+			var footer = $( this.template( this.model, this.footerTemplate ) );
+			this.addButton( 'cancel', footer.find( '#cancel' ) );
+			this.addButton( 'ok', footer.find( '#ok' ), this.done );
+
+			return footer;
 		},
 
 		open: function( callbaack ) {
 			this.render();
 			this.callback = callbaack;
 			this.$el.modal( 'show' );
+		},
+
+		addButton: function( name, btn, handler ) {
+			if ( handler ) {
+				btn.click( _.bind( handler, this ) );
+			}
+			this.buttons[name] = { button: btn, handler: handler };
+		},
+
+		done: function() {
+			if ( that.model && that.model.execute ) {
+				that.model.execute();
+			}
+
+			that.close();
 		},
 
 		close: function() {
