@@ -14,7 +14,7 @@ exports.index = function( req, res ) {
 
 exports.contacts = function( req, res ) {
     var contacts = new osp.Contacts();
-    console.log( JSON.stringify( contacts.list() ) );     
+    console.log( JSON.stringify( contacts.list(), null, '\t' ) );     
 	res.send( JSON.stringify( contacts.list() ) );     
 	/*res.send( JSON.stringify( exports.model.contacts, null, '\t' ) );*/
 };
