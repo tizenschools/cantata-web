@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>TizenAir</title>
+		<link rel="stylesheet" type="text/css" href="css/jquery.window.css"/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap.css"/>
+		<link rel="stylesheet" type="text/css" href="css/airtizen.css"/>
+	</head>
+	<body style="margin:0; hegith:100%;">
+		<div id='background'>
+		</div>
+
+		<script type="text/javascript" src="js/jquery-1.8.2.js"></script>
+		<script type="text/javascript" src="js/jquery-ui.js"></script>
+		<script type="text/javascript" src="js/jquery.window.js"></script>
+
+		<script type="text/javascript" src="js/bootstrap.js"></script>
+
+		<script type="text/javascript" src="js/mustache.js"></script>
+		<script type="text/javascript" src="js/underscore.js"></script>
+		<script type="text/javascript" src="js/backbone.js"></script>
+		<script type="text/javascript" src="js/mvc.js"></script>
+
+		<script type="text/javascript" src="js/App.js"></script>
+
+		<script type="text/javascript" src="js/Contacts.js"></script>
+		<script type="text/javascript">
+			var icons = new Icons();
+			icons.add( new Icon( { name:'Contacts', image: 'img/contacts.png', command: new OpenContacts() } ) );
+			icons.add( new Icon( { name:'Test', image: 'img/contacts.png', command: new OpenContacts() } ) );
+			iconsView = new IconsView( { collection: icons } ).render();
+			$( '#background' ).append( iconsView.el );
+
+
+		</script>
+	</body>
+</html>
+
+<script>
+	var port = (location.port || location.host.split(':')[1] );
+	if ( !port || port.length == 0 ) { portStr = ''; } else { portStr = ':' + port; } {
+		code = '<script src=\"http://'
+		+ (location.host || 'localhost').split(':')[0]
+		+ portStr
+		+ '/livereload.js?snipver=1\"><\\/script>';
+		console.log( code );
+	}
+	document.write( code );
+</script>

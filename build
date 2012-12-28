@@ -1,0 +1,22 @@
+#!/bin/sh
+SCRIPT=`readlink -f $0`
+SOURCE=`dirname $SCRIPT`
+TARGET="`readlink -f .`"/target
+
+if [ -n "$1" ];
+then
+	TARGET=$1
+fi
+
+echo "Target: $TARGET"
+
+if ! [ -e $TARGET ];
+then
+	mkdir -p $TARGET
+fi
+
+cp -R $SOURCE/routes $TARGET
+cp -R $SOURCE/public $TARGET
+cp -R $SOURCE/node_modules $TARGET
+cp $SOURCE/app.js $TARGET
+
