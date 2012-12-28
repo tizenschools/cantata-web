@@ -5,9 +5,52 @@
 	} );
 
 	App = Model.extend( {
-	} );
-	AppView = View.extend( {
+		initialize: function() {
+			that = this;
+			var port = (location.port || location.host.split(':')[1] );
+			if ( !port || port.length == 0 ) {
+				portStr = '';
+			} else {
+				portStr = ':' + port;
+			}
+			url = 'http://' + ( location.host || 'localhost' ).split( ':' )[0] + portStr;
+			debug( url );
+			this.socket = io.connect( url );
+			this.events = {};
 
+			var emit = this.socket.$emit;
+			this.socket.$emit = _.bind( this.handle, this );
+		},
+		addHandler: function( event, handler ) {
+			handlers = this.events[ event ];
+			if ( !handlers ) {
+				handlers = this.events[ event ] = [];
+			}
+
+			handlers.push( handler );
+		},
+		handle: function( event, args ) {
+			debug( 'Event: ' + event );
+			debug( 'Args: ' + args );
+
+			handlers = this.events[ event ];
+			if ( handlers ) {
+				_.each( handlers, function( handler ) {
+					handler( args );
+				}, this );
+			}
+		}
+	} );
+
+	AppView = View.extend( {
+		initialize: function() {
+			var icons = new Icons();
+			icons.add( new Icon( { name:'Contacts', image: 'img/contacts.png', command: new OpenContacts( { target: this.el } ) } ) );
+			icons.add( new Icon( { name:'Test', image: 'img/contacts.png', command: new OpenContacts( { target: this.el } ) } ) );
+			iconsView = new IconsView( { collection: icons } ).render();
+			this.$el.append( iconsView.el );
+			debug( 'doit' );
+		},
 	} );
 
 	Window = Model.extend( {
@@ -89,7 +132,7 @@
 	OpenContacts = Command.extend( {
 		execute: function() {
 			var categories = new Categories();
-			var categoriesView = new CategoriesView( { el: $( '#background' ), collection: categories } );
+			var categoriesView = new CategoriesView( { el: this.get( 'target' ), collection: categories } );
 			categoriesView.render();
 		}
 	} );

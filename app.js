@@ -5,6 +5,7 @@ var express = require( 'express' )
 , routes = require( './routes/mock' )
 , user = require( './routes/user' )
 , http = require( 'http' )
+, io = require( 'socket.io' )
 , path = require( 'path' );
 
 var app = express();
@@ -40,8 +41,22 @@ app.get( '/contacts', routes.contacts );
 app.post( '/categories', routes.category.add );
 
 // Start server
-http
+io = io.listen( http
 .createServer( app )
 .listen( app.get('port'), function() {
 	console.log( "Express server listening on port " + app.get( 'port' ) );
+} ) );
+
+// Start socket.io
+io.sockets.on( 'connection', function( socket ) {
+	socket.on( 'message', function( data ) {
+		socket.broadcase.send( data );
+	} );
+
+	socket.on( 'disconnect', function() {
+	} );
 } );
+
+context = {
+	io: io
+};

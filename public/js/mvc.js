@@ -87,7 +87,6 @@
 		},
 
 		render: function() {
-			this.$el.html( this.template( this.model ) );
 			return this;
 		},
 
@@ -158,7 +157,7 @@
 		headerTemplate:
 		'<div class="modal-header">' +
 			'<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>' +
-			'<h3>New Category</h3>' +
+			'<h3>Dialog</h3>' +
 		'</div>',
 
 		bodyTemplate:
@@ -167,8 +166,6 @@
 
 		footerTemplate:
 		'<div class="modal-footer">' +
-			'<button id="cancel" class="btn" data-dismiss="modal" aria-hidden="true">Close</button>' +
-			'<button id="ok" class="btn btn-primary">OK</button>' +
 		'</div>',
 
 		className: 'modal hide fade',
@@ -196,7 +193,9 @@
 		},
 
 		createHeader: function() {
-			return $( this.template( this.model, this.headerTemplate ) );
+			var ret = $( this.template( this.model, this.headerTemplate ) );
+			ret.find( 'h3' ).text( this.title );
+			return ret;
 		},
 
 		createBody: function() {
@@ -207,10 +206,23 @@
 
 		createFooter: function() {
 			var footer = $( this.template( this.model, this.footerTemplate ) );
-			this.addButton( 'cancel', footer.find( '#cancel' ) );
-			this.addButton( 'ok', footer.find( '#ok' ), this.done );
+
+
+			this.addButtons( footer );
 
 			return footer;
+		},
+
+		addButtons: function( footer ) {
+			var cancel = $( '<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>' );
+			this.addButton( 'cancel', cancel );
+			footer.append( cancel );
+
+			var ok = $( '<button class="btn btn-primary">OK</button>' );
+			footer.append( ok );
+			this.addButton( 'ok', ok, this.done );
+
+
 		},
 
 		open: function( callbaack ) {
@@ -237,6 +249,24 @@
 		close: function() {
 			this.$el.modal( 'hide' );
 			this.remove();
+		},
+	} );
+
+
+	QuestionDialogView = DialogView.extend( {
+		title: 'Question',
+		createContents: function() {
+			return this.model.get( 'message' );
+		},
+		addButtons: function( footer ) {
+			var no = $( '<button class="btn" data-dismiss="modal" aria-hidden="true">No</button>' );
+			this.addButton( 'no', no );
+			footer.append( no );
+
+			var no = $( '<button class="btn btn-primary">Yes</button>' );
+			footer.append( no );
+			this.addButton( 'yes', no, this.done );
+
 		},
 	} );
 
