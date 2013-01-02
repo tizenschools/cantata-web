@@ -36,9 +36,35 @@ app.configure( 'product', function() {
 
 // Register url mapping
 app.get( '/users', user.list );
+
+
+// 주소록
 app.get( '/contacts', routes.contacts );
 
 app.post( '/categories', routes.category.add );
+
+// 문자
+app.get( '/messages', routes.messages );
+app.post( '/messages', routes.messages.send );
+
+// 음악
+app.get( '/musics', routes.musics );
+app.post( '/musics', routes.musics.upload );
+app.get( '/musics/:id', routes.musics.download );
+app.delete( '/musics/:id', routes.musics.remove );
+
+// 사진
+app.get( '/musics', routes.musics );
+app.post( '/musics', routes.musics.upload );
+app.get( '/musics/:id', routes.musics.download );
+app.delete( '/musics/:id', routes.musics.remove );
+
+
+// 파일
+app.get( '/files/:path', routes.files );
+app.post( '/files/:path', routes.files.new );
+app.delete( '/files/:id', routes.files.remove );
+app.put( '/files/:id', routes.files.move );
 
 // Start server
 io = io.listen( http
