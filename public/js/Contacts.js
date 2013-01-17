@@ -13,6 +13,10 @@
 
 	Categories = Collection.extend( {
 		model: Category,
+		initialize: function() {
+			_.bindAll( this );
+			app.on( 'categoryAdded', this.addCategory );
+		},
 		url: function() {
 			return '/contacts'
 		},
@@ -29,11 +33,24 @@
 				
 				ret.push( c );
 			}
-			return _.map( ret, function( category ) {
+			return _.sortBy( _.map( ret, function( category ) {
 				c = new Category( category );
 				return c;
-			} );
+			} ), this.comparator );
 		},
+		comparator: function( m ) {
+			return m.get( 'name' );
+		},
+		addCategory: function( args ) {
+			info( '<<< Category added: {0}', JSON.stringify( args ) );
+			_.each( args, function( name ) {
+				var category = new Category( { 'name': name } );
+				var index = this.sortedIndex( category, this.comparator );
+				debug( 'Index: {0}', index );
+				this.add( category, { at: index } );
+			}, this );
+			info( 'Categories: {0}', JSON.stringify( this ) );
+		}
 	} );
 
 
@@ -61,15 +78,13 @@
 	} );
 
 	CategoryView = View.extend( {
+		tagName: 'h3',
 		initialize: function() {},
 		render: function() {
 			var name = this.model.get( 'name' );
 			debug( 'Category: ' + name );
-			this.name = $( '<h3></h3>' );
-			this.name.text( name );
+			this.$el.text( name );
 			this.$el.append( this.name );
-			this.contacts = new ContactsView( { collection: this.model.get( 'contacts' ) } ).render();
-			this.$el.append( this.contacts.el );
 			return this;
 		}
 
@@ -77,6 +92,8 @@
 
 	CategoriesView = WindowView.extend( {
 		initialize: function() {
+			this.categoryViews = [];
+			this.contactsViews = [];
 			_.bindAll( this );
 			this.collection.bind( 'reset', this.resetCategory, this );
 			this.collection.bind( 'add', this.addCategory, this );
@@ -86,14 +103,12 @@
 			return 'Contacts';
 		},
 		createContents: function() {
-			this.contents = $( '<div id="contacts"></div>' );
 			this.resetCategory();
-			return this.contents;
 		},
 		createFooter: function() {
 			debug( 'Create footer' );
 			this.footer = $( '<div id="footer"></div>' );
-			this.footer.append( new Button( {
+			var addBtn = new Button( {
 				name: '+',
 				model: new Command( {
 					execute: function() {
@@ -101,27 +116,53 @@
 						dialog.open();
 					}
 				} )
-		   	} ).render().el );
+		   	} ).render();
+
+			var removeBtn = new Button( {
+				name: 'X',
+				model: new Command( {
+					execute: function() {
+						dialog = new QuestionDialogView( { model: new RemoveCategory() } );
+						dialog.open();
+					}
+				} )
+		   	} ).render();
+			this.footer.append( addBtn.el );
+			this.footer.append( removeBtn.el );
 			return this.footer;
 		},
 
 		resetCategory: function() {
 			debug( 'Reset' );
 			this.collection.each( function( category ) {
-				debug( 'Append' );
 				this.addCategory( category );
 			}, this );
+		},
+		addCategory: function( category, collection, options ) {
+			debug( 'Options: ' + JSON.stringify( options ) );
+			var categoryView =  new CategoryView( { model: category } ).render().$el;
+			var contactsView =  new ContactsView( { collection: category.get( 'contacts' ) } ).render().$el;
+			if ( options && 0 <= options.index ) {
+				if ( options.index < this.categoryViews.length ) {
+					this.categoryViews[options.index].before( categoryView );
+					categoryView.after( contactsView );
+				} else {
+					this.contents.append( categoryView );
+					this.contents.append( contactsView );
+				}
+				this.categoryViews.splice( options.index, 0, categoryView );
+				this.contactsViews.splice( options.index, 0, contactsView );
+			} else {
+				this.contents.append( categoryView );
+				this.contents.append( contactsView );
+				this.categoryViews.push( categoryView );
+				this.contactsViews.push( contactsView );
+			}
 			if ( this.wnd ) {
+				debug( 'refersh' );
 				this.wnd.setContent( this.contents );
 				this.wnd.getFrame().find( '#contacts' ).accordion();
 			}
-		},
-		addCategory: function( category, index ) {
-			debug( 'Added' );
-			debug( 'con :' + this.contents.html() );
-			new CategoryView( { model: category, el: $( this.contents ) } ).render();
-			debug( 'con :' + this.contents.html() );
-
 		},
 	} );
 
@@ -130,16 +171,24 @@
 			$.ajax( {
 				type: 'POST',
 				url: '/categories',
-				data: { 'name': this.get( 'name' ) },
-				success: function( data ) {
-				}
+				data: { 'name': this.get( 'name' ) }
 			} );
 
-			console.log( 'Add new category' );
+			console.log( '>> Add new category' );
+		}
+	} );
+	RemoveCategory = Command.extend( {
+		defaults: {
+			'message': 'Do you confirm to remove? ( This can\'t be recovered )'
+		},
+		execute: function() {
+			debug( '>> Remove category[{0}]', this.get( 'name' ) );
 		}
 	} );
 
 	NewCategoryDialogView = DialogView.extend( {
+		title: 'New Category',
+
 		contentsTemplate:
 		'<form class="form-horizontal">' +
 			'<fieldset>' +
@@ -152,10 +201,12 @@
 				'</div>' +
 			'</fieldset>' +
 		'</form>',
+
 		done: function() {
 			this.model.set( 'name', this.$( 'input' ).val() );
-			DialogView.prototype.done();
+			DialogView.prototype.done.call( this );
 		},
+
 		onKeypress: function( e ) {
 			if ( 13 != e.keyCode ) {
 				return ;
@@ -170,5 +221,7 @@
 		}
 
 	} );
+
+
 
 } ) ();

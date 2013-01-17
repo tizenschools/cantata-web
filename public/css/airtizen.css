@@ -9,7 +9,7 @@ html,body {
 	cursor: pointer;
 }
 
-#background {
+#app {
 	width: 100%;
 	height: 100%;
 }
@@ -20,4 +20,33 @@ html,body {
 
 .modal {
 	z-index: 3001;
+}
+
+.files {
+	-ms-box-lines: multiple;
+	height: 100%;
+}
+
+.file {
+	display: inline;
+	margin: 20px;
+	width: 80px;
+	float: left;
+}
+
+.file .preview {
+	height: 80px;
+	width: 100%;
+}
+
+.file .filename {
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.file.selection {
+	border-radius: 3px;
+	border: 1px solid red;
 }
