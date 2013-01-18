@@ -37,6 +37,9 @@ app.configure( 'product', function() {
 app.get( '/users', user.list );
 
 
+// 시스템
+app.get( '/system/storage', routes.system.storage );
+
 // 주소록
 app.get( '/contacts', routes.contacts );
 

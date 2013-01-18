@@ -30,6 +30,12 @@ if ( fs.existsSync( './tizen-native.node' ) ) {
 	tizen = require( './tizen-native.js' );
 }
 
+/* 시스템 관련 기능 */
+exports.system.storage = function( req, res ) {
+    console.log( 'storage requeset : ' + req );
+};
+
+
 /* 주소록 관련 기능 */
 exports.contacts = function( req, res ) {
     console.log( stringify( tizen.Contacts.list() ) );     

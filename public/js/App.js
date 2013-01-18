@@ -45,6 +45,7 @@
 	AppView = View.extend( {
 		initialize: function() {
 			var icons = new Icons();
+			icons.add( new Icon( { name:'System', image: 'img/contacts.png', command: new OpenSystem( { target: this.el } ) } ) );
 			icons.add( new Icon( { name:'Contacts', image: 'img/contacts.png', command: new OpenContacts( { target: this.el } ) } ) );
 			icons.add( new Icon( { name:'Messages', image: 'img/contacts.png', command: new OpenMessages( { target: this.el } ) } ) );
 			icons.add( new Icon( { name:'File', image: 'img/contacts.png', command: new OpenFiles( { target: this.el } ) } ) );
@@ -147,6 +148,13 @@
 				that.$el.append( iconView.el );
 			} );
 			return this;
+		}
+	} );
+
+	OpenSystem = Command.extend( {
+		execute: function() {
+            var systemInfoView = new SystemInfoView( { el: this.get( 'target' ), model: new Model() } );
+            systemInfoView.render();
 		}
 	} );
 
