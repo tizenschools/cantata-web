@@ -104,9 +104,10 @@
 		},
 		parse: function( res ) {
 			debug( 'Response: ' + res );
+			var that = this;
 			ret = [];
 			_.each( res, function( data ) {
-				var file = new File( { path: addPath( this.parent.get( 'path' ), data['name'] ), name: data['name'], type: data['type'] } );
+				var file = that.create( { path: addPath( this.parent.get( 'path' ), data['name'] ), name: data['name'], type: data['type'] } );
 				ret.push( file );
 			}, this );
 			return ret;
@@ -212,15 +213,15 @@
 		addFile: function( file ) {
 			trace( 'File[{1}]: {0} added', file, file.get( 'path' ) );
 
-			fileView = new FileView( { container: this.model, model: file } ).render();
-			this.contents.append( fileView.el );
+			var view = new FileView( { container: this.model, model: file } ).render();
+			this.contents.append( view.el );
 
 		},
 		removeFile: function( file ) {
 			trace( 'File[{1}]: {0} removed', file, file.get( 'path' ) );
 		},
 		resetFile: function() {
-			debug( 'File reset' );
+			debug( 'Files reset' );
 			this.contents.empty();
 			this.collection.each( function( file ) {
 				this.addFile( file );

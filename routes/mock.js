@@ -3,7 +3,7 @@ var fs = require( 'fs' );
 
 stringify = function( object ) {
 	return JSON.stringify( object, null, '\n' );
-}
+};
 
 remove = function( arr, index ) {
 	console.log( 'index: ' + index + ', ' + arr.length );
@@ -21,7 +21,7 @@ pickUpFirst = function( array, value ) {
 	}
 
 	return value;
-}
+};
 
 tizen = null;
 if ( fs.existsSync( './tizen-native.node' ) ) {
@@ -50,34 +50,78 @@ exports.categories.remove = function( req, res ) {
 	console.log( 'Name: ' + req.body.name );
 	var contacts = tizen.Contacts.removeCategory( req.body.name );
 	context.io.sockets.emit( 'categoryRemoved', [ req.body.name ] );
-}
+};
 
 exports.contacts.add = function( req, res ) {
-}
+};
 
 exports.contacts.remove = function( req, res ) {
-}
+};
 
 exports.contacts.details = function( req, res ) {
-}
+};
 
 /* 문자 관련 기능 */
+exports.sessions = function( req, res ) {
+	res.send( tizen.Messages.getSessions() );
+};
 exports.messages = function( req, res ) {
-}
+	res.send( tizen.Messages.getMessages( req.params.mid ) );
+};
 
 exports.messages.send = function( req, res ) {
-}
+	tizen.Messages.send( req.body.sender|| tizen.System.getPhonenumber(), req.body.receiver, req.body.text );
+};
+
+tizen.Messages.addListener( function() {
+	// 문자 리스너 바이딩
+} );
 
 
 /* 음악 관련 기능 */
 exports.musics = function( req, res ) {
-}
+	var path = pickUpFirst( req.params, '/' );
+	console.log( '[Music] Path to list: ' + path );
+	var images = tizen.Musics.list( path );
+
+	if ( !images ) {
+		res.send( 403, 'Sorry, unhandled path' );
+	}
+	res.send( images );
+};
+
 exports.musics.upload = function( req, res ) {
-}
+};
+
 exports.musics.download = function( req, res ) {
-}
+	var path = pickUpFirst( req.params, '/' );
+	console.log( '[Musics] Path to get: ' + path );
+	var image = tizen.Musics.get( path );
+
+	if ( ! image ) {
+		res.send( 404, 'No music' );
+		return ;
+	}
+
+	res.attachment( tizen.Util.getFilenameFrom( path ) );
+	res.end( image, 'binary' );
+};
+
 exports.musics.remove = function( req, res ) {
-}
+	var path = pickUpFirst( req.params, '/' );
+	console.log( '[Musics] Path to remove: ' + path );
+
+	if ( tizen.Musics.remove( path ) ) {
+		context.io.sockets.emit( 'musicRemoved', path );
+	}
+};
+
+exports.playlists = function( req, res ) {
+	res.send( tizen.Musics.getPlaylistNames() );
+};
+exports.playlists.get = function( req, res ) {
+	res.send( tizen.Musics.getPlaylist( req.params.name ) );
+};
 
 /* 사진 관련 기능 */
 exports.photos = function( req, res ) {
@@ -90,9 +134,9 @@ exports.photos = function( req, res ) {
 	}
 	res.send( images );
 
-}
+};
 exports.photos.upload = function( req, res ) {
-}
+};
 exports.photos.download = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
 	console.log( '[Photo] Path to get: ' + path );
@@ -106,7 +150,7 @@ exports.photos.download = function( req, res ) {
 	res.attachment( tizen.Util.getFilenameFrom( path ) );
 	res.end( image, 'binary' );
 
-}
+};
 exports.photos.remove = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
 	console.log( '[Photo] Path to remove: ' + path );
@@ -114,7 +158,7 @@ exports.photos.remove = function( req, res ) {
 	if ( tizen.Images.remove( path ) ) {
 		context.io.sockets.emit( 'photoRemoved', path );
 	}
-}
+};
 
 /* 파일 관리 */
 exports.files = function( req, res ) {
@@ -131,7 +175,7 @@ exports.files = function( req, res ) {
 	} else {
 		res.send( 403, 'Sorry, unhandled path' );
 	}
-}
+};
 
 exports.files.new = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
@@ -139,7 +183,7 @@ exports.files.new = function( req, res ) {
 	if ( tizen.Files.createDirectory( path ) ) {
 		context.io.sockets.emit( 'directoryAdded', path );
 	}
-}
+};
 
 exports.files.remove = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
@@ -149,8 +193,8 @@ exports.files.remove = function( req, res ) {
 		context.io.sockets.emit( 'fileRemoved', path );
 	}
 
-}
+};
 
 exports.files.move = function( req, res ) {
-}
+};
 

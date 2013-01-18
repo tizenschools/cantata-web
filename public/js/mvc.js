@@ -72,6 +72,8 @@
 					if ( !temp ) {
 						temp = this.defaultTemplate;
 					}
+				} else {
+					temp = this.defaultTemplate;
 				}
 			}
 
@@ -175,16 +177,19 @@
 
 		initialize: function( options ) {
 			_.bindAll( this );
+			this.initializeEvents();
 			this.buttons = {};
-			this.header = this.createHeader();
-			this.body = this.createBody();
-			this.footer = this.createFooter();
+			this.$header = this.createHeader();
+			this.$body = this.createBody();
+			this.$footer = this.createFooter();
+		},
+		initializeEvents: function() {
 		},
 
 		render: function() {
-			this.$el.append( this.header );
-			this.$el.append( this.body );
-			this.$el.append( this.footer );
+			this.$el.append( this.$header );
+			this.$el.append( this.$body );
+			this.$el.append( this.$footer );
 
 			var that = this;
 			this.$el.modal( {
@@ -194,10 +199,19 @@
 				that.remove();
 			} );
 		},
-
+		renderTitle: function() {
+			this.$header.find( 'h3' ).text( this.getTitle() );
+		},
+		getTitle: function() {
+			if ( this.model && this.model.get ) {
+				this.model.bind( 'change', this.setTitle, this );
+				return this.model.get( 'title' );
+			}
+			return this.title;
+		},
 		createHeader: function() {
 			var ret = $( this.template( this.model, this.headerTemplate ) );
-			ret.find( 'h3' ).text( this.title );
+			ret.find( 'h3' ).text( this.getTitle() );
 			return ret;
 		},
 
@@ -209,8 +223,6 @@
 
 		createFooter: function() {
 			var footer = $( this.template( this.model, this.footerTemplate ) );
-
-
 			this.addButtons( footer );
 
 			return footer;
@@ -229,8 +241,8 @@
 		},
 
 		open: function( callbaack ) {
-			this.render();
 			this.callback = callbaack;
+			this.render();
 			this.$el.modal( 'show' );
 		},
 
@@ -238,6 +250,12 @@
 			if ( handler ) {
 				btn.click( _.bind( function() {
 					handler.call( this, this.args );
+				}, this ) );
+			}
+			if ( this.callback ) {
+				var c = this.callback;
+				btn.click( _.bind( function() {
+					c( name, this.args );
 				}, this ) );
 			}
 			this.buttons[name] = { button: btn, handler: handler };

@@ -49,6 +49,7 @@
 			icons.add( new Icon( { name:'Messages', image: 'img/contacts.png', command: new OpenMessages( { target: this.el } ) } ) );
 			icons.add( new Icon( { name:'File', image: 'img/contacts.png', command: new OpenFiles( { target: this.el } ) } ) );
 			icons.add( new Icon( { name:'Photo', image: 'img/contacts.png', command: new OpenPhotos( { target: this.el } ) } ) );
+			icons.add( new Icon( { name:'Music', image: 'img/contacts.png', command: new OpenMusics( { target: this.el } ) } ) );
 			iconsView = new IconsView( { collection: icons } ).render();
 			this.$el.append( iconsView.el );
 			debug( 'doit' );
@@ -63,6 +64,11 @@
 			if ( this.model && this.model.get ) {
 				return this.model.get( 'title' );
 			}
+			if ( this.title ) {
+				return this.title;
+			}
+		},
+		initialize: function() {
 		},
 		render: function() {
 			$.window.prepare( {
@@ -72,10 +78,12 @@
 			} );
 			this.wnd = this.$el.window( {
 				title: this.getTitle(),
-				modalOpacity: 0.5,
+				modalOpacity: 0.6,
 				content: $( '<div id="contents"></div>' ),
 				footerContent: this.createFooter(),
 				checkBoundary: true,
+				width: this.width || 400,
+				height: this.height || 500,
 				resizable: true
 			} );
 
@@ -152,8 +160,8 @@
 
 	OpenMessages = Command.extend( {
 		execute: function() {
-			var messages = new Messages();
-			var messagesView = new MessagesView( { el: this.get( 'target' ), collection: messages } );
+			var messages = new MessageSessions();
+			var messagesView = new MessageSessionsView( { el: this.get( 'target' ), collection: messages } );
 			messagesView.render();
 		}
 	} );
@@ -173,6 +181,13 @@
 			var files = new Photos( [], { parent: path } );
 			var filesView = new PhotosView( { el: this.get( 'target' ), model: path, collection: files } );
 			filesView.render();
+		}
+	} );
+
+	OpenMusics = Command.extend( {
+		execute: function() {
+			var dialogView = new MusicPlayerDialogView( { el: this.get( 'target' ), model: new Model() } );
+			dialogView.render();
 		}
 	} );
 } ) ();

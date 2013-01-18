@@ -43,7 +43,8 @@ app.get( '/contacts', routes.contacts );
 app.post( '/categories', routes.categories.add );
 
 // 문자
-app.get( '/messages', routes.messages );
+app.get( '/messages', routes.sessions );
+app.get( '/messages/:mid', routes.messages );
 app.post( '/messages', routes.messages.send );
 
 // 음악
@@ -51,6 +52,9 @@ app.get( '/musics', routes.musics );
 app.post( '/musics', routes.musics.upload );
 app.get( '/musics/:id', routes.musics.download );
 app.delete( '/musics/:id', routes.musics.remove );
+
+app.get( '/playlists', routes.playlists );
+app.get( '/playlists/:name', routes.playlists.get );
 
 // 사진
 app.get( '/photos', routes.photos );
