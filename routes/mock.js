@@ -31,8 +31,12 @@ if ( fs.existsSync( './tizen-native.node' ) ) {
 }
 
 /* 시스템 관련 기능 */
+exports.system = function() {
+};
+
 exports.system.storage = function( req, res ) {
-    console.log( 'storage requeset : ' + req );
+    console.log( 'GET system/storage header host: ' + req.header('host') );
+    res.send( stringify( tizen.System.getStorage() ) );
 };
 
 
