@@ -7,6 +7,7 @@
 		<link rel="stylesheet" type="text/css" href="css/jquery.window.css"/>
 		<link rel="stylesheet" type="text/css" href="css/jquery.contextMenu.css"/>
 		<link rel="stylesheet" type="text/css" href="css/jquery.fileupload-ui.css"/>
+		<link rel="stylesheet" type="text/css" href="css/jquery.jqplot.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/jplayer.blue.monday.css"/>
 		<link rel="stylesheet" type="text/css" href="css/bootstrap.css"/>
 		<link rel="stylesheet" href="http://blueimp.github.com/Bootstrap-Image-Gallery/css/bootstrap-image-gallery.min.css" />
@@ -19,6 +20,8 @@
 
 		<script type="text/javascript" src="js/jquery-1.8.2.js"></script>
 		<script type="text/javascript" src="js/jquery-ui.js"></script>
+        <script type="text/javascript" src="js/jquery.jqplot.1.0.4/jquery.jqplot.min.js"></script>
+        <script type="text/javascript" src="js/jquery.jqplot.1.0.4/plugins/jqplot.pieRenderer.min.js"></script>
 		<!--script type="text/javascript" src="js/jQuery.jPlayer.2.2.0/jquery.jplayer.min.js"></script-->
 		<script type="text/javascript" src="js/jquery.jplayer.js"></script>
 		<script type="text/javascript" src="js/jplayer.playlist.js"></script>
@@ -49,6 +52,10 @@
 		<script type="text/javascript" src="js/Photos.js"></script>
 		<script type="text/javascript" src="js/Musics.js"></script>
 
+        <script type="text/template" id="system-storage">
+            <div id="storage-pie" style="margin-top:20px; margin-left:20px; width:300px; height:300px;"></div>
+        </script>
+        
 		<script type="text/template" id="uploadForm">
 			<form id="fileupload" action="" method="POST" enctype="multipart/form-data" style="height: 300px">
 				<!-- Redirect browsers with JavaScript disabled to the origin page -->

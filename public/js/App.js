@@ -153,7 +153,8 @@
 
 	OpenSystem = Command.extend( {
 		execute: function() {
-            var systemInfoView = new SystemInfoView( { el: this.get( 'target' ), model: new Model() } );
+            var storage = new SystemStorage();
+            var systemInfoView = new SystemInfoView( { el: this.get( 'target' ), model: storage } );
             systemInfoView.render();
 		}
 	} );
