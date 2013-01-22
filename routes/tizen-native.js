@@ -1,4 +1,5 @@
 var _ = require( 'underscore' );
+var util = require( 'util' );
 var fs = require( 'fs' );
 var uuid = require( 'idgen' );
 
@@ -78,7 +79,16 @@ Tizen.FS = Tizen.FS || function( base ) {
 
 Tizen.FS.FileAttribute = Tizen.FS.FileAttribute || function( attr ) {
 	this.attr = attr;
+	this.size = attr.size;
 };
+
+Tizen.FS.FileAttribute.prototype.getPath = function() {
+	return this.attr.path;
+}
+
+Tizen.FS.FileAttribute.prototype.exists = function() {
+	return null != this.attr.type;
+}
 
 Tizen.FS.FileAttribute.prototype.isDirectory = function() {
 	return this.attr.type == 'd';
@@ -92,25 +102,34 @@ Tizen.FS.FileAttribute.prototype.getName = function() {
 };
 
 
+Tizen.FS.prototype.getPath = Tizen.FS.prototype.getPath || function( path ) {
+	return Tizen.Util.addPath( this.base, path );
+}
+
 Tizen.FS.prototype.getAttribute = Tizen.FS.prototype.getAttribute || function( path ) {
-	var filePath = Tizen.Util.addPath( this.base, path );
+	var filePath = this.getPath( path );
 
 	if ( !fs.existsSync( filePath ) ) {
-		return null;
+		return new Tizen.FS.FileAttribute( {
+			type: null,
+			name: Tizen.Util.getFilenameFrom( path ),
+			size: 0
+		} );
 	}
 
 	var stat = fs.statSync( filePath );
-	var ret = new Tizen.FS.FileAttribute( {
+	return new Tizen.FS.FileAttribute( {
 		type: stat.isDirectory()?'d':'f',
-		name: Tizen.Util.getFilenameFrom( path )
+		name: Tizen.Util.getFilenameFrom( path ),
+		path: filePath,
+		size: stat.size
 	} );
 	
-	return ret;
 };
 
 
 Tizen.FS.prototype.list = Tizen.FS.prototype.list || function( path ) {
-	var filePath = Tizen.Util.addPath( this.base, path );
+	var filePath = this.getPath( path );
 	var ret = [];
 
 	var stat = fs.statSync( filePath );
@@ -136,10 +155,11 @@ Tizen.FS.prototype.list = Tizen.FS.prototype.list || function( path ) {
 
 Tizen.FS.prototype.create = Tizen.FS.prototype.create || function( path, options ) {
 	var attr = this.getAttribute( path );
-	if ( attr ) {
+	console.log( 'Attribute: ' + stringify( attr ) );
+	if ( attr.exists() ) {
 		return false;
 	}
-	var filePath = Tizen.Util.addPath( this.base, path );
+	var filePath = this.getPath( path );
 	if ( options && options.type == 'd' ) {
 		fs.mkdir( filePath );
 	} else {
@@ -149,7 +169,7 @@ Tizen.FS.prototype.create = Tizen.FS.prototype.create || function( path, options
 };
 
 Tizen.FS.prototype.remove = Tizen.FS.prototype.remove || function( path, options ) {
-	var filePath = Tizen.Util.addPath( this.base, path );
+	var filePath = this.getPath( path );
 
 	console.log( 'file path: ' + filePath );
 
@@ -173,8 +193,24 @@ Tizen.FS.prototype.remove = Tizen.FS.prototype.remove || function( path, options
 	return true;
 };
 
-Tizen.FS.prototype.read = Tizen.FS.prototype.read || function( path ) {
-	var filePath = Tizen.Util.addPath( this.base, path );
+Tizen.FS.prototype.rename = Tizen.FS.prototype.rename || function( from, to ) {
+	console.log( 'Rename :' + from + ' -> ' + to );
+	fs.rename( from, to, function( err, status ) {
+		if ( err ) {
+			console.log( 'error: ' + stringify( err ) );
+			if ( 52 == err.errno ) {
+				var out = fs.createWriteStream( to );
+				var inStream = fs.createReadStream( from );
+				inStream.pipe( out );
+				fs.unlink( from );
+			}
+		}
+
+	} );
+}
+
+Tizen.FS.prototype.read = Tizen.FS.prototype.read || function( path, start, end ) {
+	var filePath = this.getPath( path );
 
 	console.log( 'File path: ' + filePath );
 
@@ -189,8 +225,29 @@ Tizen.FS.prototype.read = Tizen.FS.prototype.read || function( path ) {
 	}
 
 	var contents = fs.readFileSync( filePath );
+	if ( ! start ) {
+		return contents;
+	}
 
-	return contents;
+	end = end || fs.size;
+	return contents.slice( start, end );
+}
+Tizen.FS.prototype.stream = Tizen.FS.prototype.stream || function( path, start, end ) {
+	var filePath = this.getPath( path );
+
+	console.log( 'File path: ' + filePath );
+
+	var attr = this.getAttribute( path );
+
+	if ( ! attr ) {
+		return null;
+	}
+
+	if ( !attr.isFile() ) {
+		return null;
+	}
+
+	return fs.createReadStream( filePath, { flags: 'r', start: start, end: end } );
 }
 
 Tizen.Files = Tizen.Files || {
@@ -212,7 +269,17 @@ Tizen.Files = Tizen.Files || {
 
 	remove: function( path ) {
 		return Tizen.Files.fs.remove( path, { recursive: true } );
-	}
+	},
+
+	moveTo: function( from, to ) {
+		return Tizen.Files.fs.rename( from, Tizen.Files.fs.getPath( to ) );
+	},
+
+	rename: function( path, newpath ) {
+		var from = Tizen.Files.fs.getPath( path );
+		var to = Tizen.Files.fs.getPath( newpath );
+		return Tizen.Files.fs.rename( from, to );
+	},
 };
 
 
@@ -302,10 +369,16 @@ Tizen.Musics = {
 		return Tizen.Musics.fs.list( path );
 	},
 
+	getAttribute: function( path ) {
+		return Tizen.Musics.fs.getAttribute( path );
+	},
+
 	get: function( path ) {
-		var attr = Tizen.Musics.fs.getAttribute( path );
-		console.log( 'Attr: ' + JSON.stringify( attr ) );
 		return Tizen.Musics.fs.read( path );
+	},
+
+	stream: function( path, start, end ) {
+		return Tizen.Musics.fs.stream( path, start, end );
 	},
 
 	remove: function( path ) {

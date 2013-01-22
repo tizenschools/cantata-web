@@ -96,16 +96,43 @@ exports.musics.upload = function( req, res ) {
 exports.musics.download = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
 	console.log( '[Musics] Path to get: ' + path );
-	var image = tizen.Musics.get( path );
 
-	if ( ! image ) {
-		res.send( 404, 'No music' );
-		return ;
+	if ( typeof req.headers.range == 'undefined' ) {
+		var contents = tizen.Musics.get( path );
+		if ( ! contents ) {
+			res.send( 404, 'No music' );
+			return ;
+		}
+
+		res.attachment( tizen.Util.getFilenameFrom( path ) );
+		res.end( contents, 'binary' );
+	} else {
+		var header = {};
+		var range = req.headers.range;
+		var parts = range.replace( /bytes=/, '' ).split( '-' );
+		var partialStart = parts[0];
+		var partialEnd = parts[1];
+
+		var stat = tizen.Musics.getAttribute( path );
+		console.log( 'stat: ' + stringify( stat ) );
+		var total = stat['size'];
+
+		var start = parseInt( partialStart, 10 );
+		var end = partialEnd?parseInt( partialEnd, 10 ): total-1;;
+
+
+		header["Content-Range"] = "bytes " + start + "-" + end + "/" + (total);
+		header["Accept-Ranges"] = "bytes";
+		header["Content-Length"]= (end-start)+1;
+		header['Transfer-Encoding'] = 'chunked';
+		header["Connection"] = "close";
+
+		console.log( 'Header: ' + stringify( header ) );
+
+		res.writeHead( 206, header ); 
+		tizen.Musics.stream( path, start, end ).pipe( res );
 	}
-
-	res.attachment( tizen.Util.getFilenameFrom( path ) );
-	res.end( image, 'binary' );
-};
+}
 
 exports.musics.remove = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
@@ -170,6 +197,7 @@ exports.files = function( req, res ) {
 	if ( stat.isDirectory() ) {
 		res.send( tizen.Files.list( path ) );
 	} else if ( stat.isFile() ) {
+		console.log( 'File( ' + path + ' ) downloaded' );
 		res.attachment( tizen.Util.getFilenameFrom( path ) );
 		res.end( tizen.Files.read( path ), 'binary' );
 	} else {
@@ -177,10 +205,32 @@ exports.files = function( req, res ) {
 	}
 };
 
-exports.files.new = function( req, res ) {
+exports.files.new = function( req, res, next ) {
 	var path = pickUpFirst( req.params, '/' );
-	console.log( '[File] Path to add: ' + path );
-	if ( tizen.Files.createDirectory( path ) ) {
+	console.log( '[File] Path : ' + path );
+	var stat = tizen.Files.getAttribute( path );
+	if ( stat.exists() ) {
+		console.log( '[File] Files upload' );
+
+		if ( Array.isArray( req.files.files ) ) {
+			_.each( req.files.files, function( file ) {
+				var tmpPath = file.path;
+				var fileName = file.filename;
+
+				tizen.Files.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
+			} );
+			res.end();
+		} else if ( file ) {
+			var tmpPath = file.path;
+			var fileName = file.filename;
+
+			tizen.Files.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
+			res.end();
+		} else {
+			res.end( 500 );
+		}
+	} else if ( tizen.Files.createDirectory( path ) ) {
+		console.log( '[File] Directory( ' + stat.getPath() + ' ) created' );
 		context.io.sockets.emit( 'directoryAdded', path );
 	}
 };
@@ -196,5 +246,15 @@ exports.files.remove = function( req, res ) {
 };
 
 exports.files.move = function( req, res ) {
+	var path = pickUpFirst( req.params, '/' );
+	console.log( '[File] Path to rename: ' + path + ', body: ' + stringify( req.body ) );
+
+	if ( req.body.newpath ) {
+		if ( tizen.Files.rename( path, req.body.newpath ) ) {
+			context.io.sockets.emit( 'fileRenamed', { path: path, newpath: newpath } );
+		}
+	}
+
+
 };
 

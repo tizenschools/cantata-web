@@ -107,7 +107,7 @@
 			var that = this;
 			ret = [];
 			_.each( res, function( data ) {
-				var file = that.create( { path: addPath( this.parent.get( 'path' ), data['name'] ), name: data['name'], type: data['type'] } );
+				var file = new File( { path: addPath( this.parent.get( 'path' ), data['name'] ), name: data['name'], type: data['type'] } );
 				ret.push( file );
 			}, this );
 			return ret;
@@ -197,7 +197,13 @@
 							execute: function( args ) {
 								trace( 'Args: {0}, Files: {1}', args, args.files );
 
-								args.fileupload( 'send', { files: args.files } );
+								var collection = this.get( 'files' );
+								if ( collection ) {
+									collection.each( function( file ) {
+										file.get( 'form' ).submit();
+									} );
+								}
+
 							}
 						} ) } );
 						dialog.open();
@@ -244,9 +250,17 @@
 				return ;
 			}
 			var path = selection.model.get( 'path' );
-			var dialog = new QuestionDialogView( { model: new RemoveFile( { 'path': path } ) } );
-			dialog.open();
 
+			switch( command ) {
+				case 'delete':
+					var dialog = new QuestionDialogView( { model: new RemoveFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+				case 'rename':
+					var dialog = new InputDialogView( { model: new RenameFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+			}
 		}
 	} );
 
@@ -258,6 +272,19 @@
 			debug( '>> Remove File [{0}]', this.get( 'path' ) );
 			$.ajax( '/files' + this.get( 'path' ), {
 				type: 'DELETE'
+			} );
+		}
+	} );
+	RenameFile = Command.extend( {
+		defaults: {
+			'message': 'Input new name?'
+		},
+		execute: function( name ) {
+			var path = this.get( 'path' );
+			debug( '>> Rename File [{0}] to [{1}]', path, name );
+			$.ajax( addPath( '/files', this.get( 'path' ) ), {
+				type: 'PUT',
+				data: { newpath: addPath( getParentFrom( path ), name ) }
 			} );
 		}
 	} );
@@ -279,37 +306,43 @@
 		title: 'Upload files',
 		templateId: '#uploadForm',
 		createContents: function() {
+			var that = this;
 			this.args = $( this.template( this.model ) );
-			var files = this.args.files = [];
 			this.args.fileupload( {
 				url: addPath( '/files', this.model.get( 'path' ) ),
 				dataType: 'json',
 				add: function( e, data ) {
-					that  = files;
 					_.each( data.files, function( file ) {
 						debug( 'File name: {0}', file.name );
 
-						var model = _.find( that, function( exist )  {
+						var model = _.find( this.model.get( 'files' ), function( exist )  {
 							return ( exist.name == file.name );
 						} )
 						if ( ! model ) {
-							model = new Model( { name:file.name, size: file.size, file: file } );
-							that.push( file );
+							model = new Model( { name:file.name, size: file.size, file: file, form: data } );
+
+							if ( this.model.get( 'files' ) ) {
+								this.model.get( 'files' ).add( model );
+							} else {
+								this.model.set( 'files', new Collection( [ model ] ) );
+							}
 							var subView = new UploadFileView( { model: model } );
 							subView.render().$el.appendTo( '#uploads' );
 						} else {
 							model.set( 'size', file.size );
 							model.set( 'file', file );
 						}
-					} );
+					}, that );
 				},
-				done: function( e, data ) {
+				done: function() {
+					that.close();
 				}
+
 			} );
+			this.model.set( 'fileupload', this.args );
 
 			return this.args;
 		},
-
 		addButtons: function( footer ) {
 			var cancel = $( '<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>' );
 			this.addButton( 'cancel', cancel );
@@ -321,6 +354,7 @@
 
 		},
 	} );
+
 	UploadFileView = View.extend( {
 		tagName: 'tr',
 		templateId: '#uploadFile',

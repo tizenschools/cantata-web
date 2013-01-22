@@ -1,7 +1,29 @@
 ( function() {
 	Music = Model.extend( {
+		defaults: {
+			title: 'Title',
+			artist: 'Title',
+			mp3: 'Title',
+			poster: null,
+		},
 	} );
-	Playlist = Collection.extend( {
+	MusicList = Collection.extend( {
+		model: Music,
+		setName: function( name ) {
+			this.name = name;
+			this.fetch();
+		},
+		url: function( name ) {
+			return addPath( '/playlists', this.name );
+		},
+		parse: function( res ) {
+			trace( '<< Musics for {0}', this.name );
+			var ret = _.map( res, function( path ) {
+				return { title: path, artist: 'Unknown', mp3: addPath( '/musics', path ) };
+			} );
+			debug( 'Musics: {0}', JSON.stringify( ret ) );
+			return ret;
+		},
 	} );
 
 	MusicPlayerDialogView = WindowView.extend( {
@@ -13,6 +35,10 @@
 		initialize: function() {
 			this.width = 422;
 			this.height = 300;
+			this.collection = this.collection || new MusicList();
+			_.bindAll( this );
+			this.collection.bind( 'reset', this.resetMusic, this );
+			this.collection.bind( 'add', this.addMusic, this );
 			this.$player = $( this.template( this.model ) );
 		},
 
@@ -50,7 +76,7 @@
 				execute: function() {
 				}
 			} ) } ).render();
-			var loadBtn = new Button( { name: 'Load', model: new OpenPlaylistCommand() } ).render();
+			var loadBtn = new Button( { name: 'Load', model: new OpenPlaylistCommand( { musics: this.collection } ) } ).render();
 			var saveBtn = new Button( { name: 'Save', model: new Command( {
 				execute: function() {
 				}
@@ -66,7 +92,16 @@
 
 			controls.append( loadBtn.$el );
 		},
+		resetMusic: function() {
+			this.$playList.setPlaylist( [] );
+			this.collection.each( this.addMusic );
+		},
 
+		addMusic: function( music ) {
+			var json = music.toJSON();
+			debug( 'Music to add: {0}', JSON.stringify( json ) );
+			this.$playList.add( music.toJSON() );
+		}
 	} );
 
 	MusicPlaylist = Model.extend( {
@@ -102,6 +137,7 @@
 		openPlaylist: function( e, data ) {
 			var selected = this.$( 'input:checked' );
 			debug( 'Selected: {0}', selected.val() );
+			this.args = selected.val();
 			this.close();
 		},
 
@@ -132,8 +168,9 @@
 		execute: function() {
 			new PlaylistDialogView().open( this.open );
 		},
-		open: function() {
-			info( '{0}: {1}', command, options );
+		open: function( command, name ) {
+			info( '{0}: {1}', command, name );
+			this.get( 'musics' ).setName( name );
 		}
 	} );
 } ) ();

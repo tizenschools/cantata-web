@@ -118,6 +118,7 @@
 
 	Command = Model.extend( {
 		initialize: function() {
+			_.bindAll( this );
 			if ( !this.execute ) {
 				this.execute = this.get( 'execute' );
 			}
@@ -235,28 +236,36 @@
 
 			var ok = $( '<button class="btn btn-primary">OK</button>' );
 			footer.append( ok );
-			this.addButton( 'ok', ok, this.done );
+			this.addButton( 'ok', ok, [ this.done, this.close ] );
 
 
 		},
 
-		open: function( callbaack ) {
-			this.callback = callbaack;
+		open: function( callback ) {
+			if ( callback ) {
+				_.each( this.buttons, function( btn, name ) {
+					btn.button.click( _.bind( function() {
+						callback.call( this, name, this.args );
+					}, this ) );
+				}, this );
+			}
 			this.render();
 			this.$el.modal( 'show' );
 		},
 
 		addButton: function( name, btn, handler ) {
 			if ( handler ) {
-				btn.click( _.bind( function() {
-					handler.call( this, this.args );
-				}, this ) );
-			}
-			if ( this.callback ) {
-				var c = this.callback;
-				btn.click( _.bind( function() {
-					c( name, this.args );
-				}, this ) );
+				if ( handler instanceof Array ) {
+					_.each( handler, function( h ) {
+						btn.click( _.bind( function() {
+							h.call( this, this.args );
+						}, this ) );
+					}, this );
+				} else {
+					btn.click( _.bind( function() {
+						handler.call( this, this.args );
+					}, this ) );
+				}
 			}
 			this.buttons[name] = { button: btn, handler: handler };
 		},
@@ -268,8 +277,6 @@
 					execute.apply( this.model, args );
 				}
 			}
-
-			this.close();
 		},
 
 		close: function() {
@@ -290,7 +297,7 @@
 
 			var yes = $( '<button class="btn btn-primary">Yes</button>' );
 			footer.append( yes );
-			this.addButton( 'yes', yes, this.done );
+			this.addButton( 'yes', yes, [ this.done, this.close ] );
 
 		},
 	} );
