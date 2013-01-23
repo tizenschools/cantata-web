@@ -72,6 +72,16 @@ Tizen.System.getPhonenumber = function() {
 	return '0000000000';
 }
 
+Tizen.System.getStorage = function() {
+
+    var model = {
+        'total': "2048000",
+        'usage': "1024000",
+        'remainder': "1024000"
+    };
+    return model;
+}
+
 /* FS */
 Tizen.FS = Tizen.FS || function( base ) {
 	this.base = base;
