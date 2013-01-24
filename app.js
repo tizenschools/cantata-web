@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Module dependencies.
 var express = require( 'express' )
 , connect = require( 'connect' )
@@ -51,10 +53,9 @@ app.get( '/messages/:mid', routes.messages );
 app.post( '/messages', routes.messages.send );
 
 // 음악
-app.get( '/musics', routes.musics );
+app.get( /^\/musics(\/.*)/, routes.musics.download );
 app.post( '/musics', routes.musics.upload );
-app.get( '/musics/:id', routes.musics.download );
-app.delete( '/musics/:id', routes.musics.remove );
+app.delete( /^\/musics(\/.*)/, routes.musics.remove );
 
 app.get( '/playlists', routes.playlists );
 app.get( '/playlists/:name', routes.playlists.get );
@@ -69,6 +70,7 @@ app.delete( /^\/photos(\/.*)/, routes.photos.remove );
 // 파일
 app.get( '/files', routes.files );// 디렉토리 조회
 app.get( /^\/files(\/.+)/, routes.files );// 디렉토리 조회 및 파일 다운로드
+app.post( '/files', routes.files.new );// 디렉토리 생성
 app.post( /^\/files(\/.+)/, routes.files.new );// 디렉토리 생성
 app.delete( /^\/files(\/.+)/, routes.files.remove );// 파일 및 디렉토리 삭제
 app.put( /^\/files(\/.+)/, routes.files.move );// 파일 이름 바꾸기
