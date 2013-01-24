@@ -53,6 +53,7 @@ app.get( '/messages/:mid', routes.messages );
 app.post( '/messages', routes.messages.send );
 
 // 음악
+app.get( '/musics', routes.musics );
 app.get( /^\/musics(\/.*)/, routes.musics.download );
 app.post( '/musics', routes.musics.new );
 app.delete( /^\/musics(\/.*)/, routes.musics.remove );

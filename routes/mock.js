@@ -92,12 +92,19 @@ tizen.Messages.addListener( function() {
 exports.musics = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
 	console.log( '[Music] Path to list: ' + path );
-	var images = tizen.Musics.list( path );
-
-	if ( !images ) {
-		res.send( 403, 'Sorry, unhandled path' );
+	var stat = tizen.Musics.getAttribute( path );
+	if ( stat.isDirectory() ) {
+		var musiclists = tizen.Musics.list( path );
+		if ( !musiclists ) {
+			res.send( 403, 'Sorry, unhandled path' );
+		}
+		res.send( musiclists );
+	} else if ( stat.isFile() ) {
+		console.log( '[Music] ' + path + ' downloaded' );
+		var music = tizen.Music.get( path );
+		res.attachment( tizen.Util.getFilenameFrom( path ) );
+		res.end( music, 'binary' );	
 	}
-	res.send( images );
 };
 
 exports.musics.upload = function( req, res ) {
