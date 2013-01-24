@@ -164,29 +164,48 @@ exports.playlists.get = function( req, res ) {
 exports.photos = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
 	console.log( '[Photo] Path to list: ' + path );
-	var images = tizen.Images.list( path );
-
-	if ( !images ) {
-		res.send( 403, 'Sorry, unhandled path' );
+	var stat = tizen.Images.getAttribute( path );
+	if ( stat.isDirectory() ) {
+		res.send( tizen.Images.list( path ) );
+	} else if ( stat.isFile() ) {
+		console.log( '[Photo] ' + path + ' downloaded' );
+		var image = tizen.Images.read( path );
+		res.attachment( tizen.Util.getFilenameFrom( path ) );
+		res.end( image, 'binary' );
 	}
-	res.send( images );
+
 
 };
-exports.photos.upload = function( req, res ) {
-};
-exports.photos.download = function( req, res ) {
+exports.photos.new = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
-	console.log( '[Photo] Path to get: ' + path );
-	var image = tizen.Images.get( path );
+	console.log( '[Photo] Path : ' + path );
+	var stat = tizen.Images.getAttribute( path );
+	if ( stat.exists() ) {
+		console.log( '[Photo] Files upload' );
 
-	if ( ! image ) {
-		res.send( 404, 'No image' );
-		return ;
+		if ( Array.isArray( req.files.files ) ) {
+			_.each( req.files.files, function( file ) {
+				var tmpPath = file.path;
+				var fileName = file.filename;
+
+				tizen.Images.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
+				context.io.sockets.emit( 'photoAdded', path );
+			} );
+			res.end();
+		} else if ( req.files.files ) {
+			var tmpPath = req.files.files.path;
+			var fileName = req.files.files.filename;
+
+			tizen.Images.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
+			res.end();
+			context.io.sockets.emit( 'photoAdded', path );
+		} else {
+			res.end( 500 );
+		}
+	} else if ( tizen.Images.createDirectory( path ) ) {
+		console.log( '[Photo] Directory( ' + stat.getPath() + ' ) created' );
+		context.io.sockets.emit( 'photoDirectoryAdded', path );
 	}
-
-	res.attachment( tizen.Util.getFilenameFrom( path ) );
-	res.end( image, 'binary' );
-
 };
 exports.photos.remove = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );

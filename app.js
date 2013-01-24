@@ -54,7 +54,7 @@ app.post( '/messages', routes.messages.send );
 
 // 음악
 app.get( /^\/musics(\/.*)/, routes.musics.download );
-app.post( '/musics', routes.musics.upload );
+app.post( '/musics', routes.musics.new );
 app.delete( /^\/musics(\/.*)/, routes.musics.remove );
 
 app.get( '/playlists', routes.playlists );
@@ -62,16 +62,17 @@ app.get( '/playlists/:name', routes.playlists.get );
 
 // 사진
 app.get( '/photos', routes.photos );
-app.post( /^\/photos(\/.*)/, routes.photos.upload );
-app.get( /^\/photos(\/.*)/, routes.photos.download );
+app.get( /^\/photos(\/.*)/, routes.photos );
+app.post( '/photos', routes.new );
+app.post( /^\/photos(\/.*)/, routes.photos.new );
 app.delete( /^\/photos(\/.*)/, routes.photos.remove );
-
+app.put( /^\/photos(\/.+)/, routes.files.move );// 파일 이름 바꾸기
 
 // 파일
 app.get( '/files', routes.files );// 디렉토리 조회
 app.get( /^\/files(\/.+)/, routes.files );// 디렉토리 조회 및 파일 다운로드
-app.post( '/files', routes.files.new );// 디렉토리 생성
-app.post( /^\/files(\/.+)/, routes.files.new );// 디렉토리 생성
+app.post( '/files', routes.files.new );// 디렉토리 생성 및 업로드
+app.post( /^\/files(\/.+)/, routes.files.new );// 디렉토리 생성 및 업로드
 app.delete( /^\/files(\/.+)/, routes.files.remove );// 파일 및 디렉토리 삭제
 app.put( /^\/files(\/.+)/, routes.files.move );// 파일 이름 바꾸기
 

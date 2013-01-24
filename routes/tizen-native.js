@@ -339,19 +339,36 @@ Tizen.Image = Tizen.Image || function() {};
 
 Tizen.Images = {
 	fs: new Tizen.FS( Tizen.Util.addPath( __dirname, 'test/image' ) ),
+	getAttribute: function( path ) {
+		return Tizen.Images.fs.getAttribute( path );
+	},
+
 	list: function( path ) {
 		return Tizen.Images.fs.list( path );
 	},
 
-	get: function( path ) {
-		var attr = Tizen.Images.fs.getAttribute( path );
-		console.log( 'Attr: ' + JSON.stringify( attr ) );
+	remove: function( path ) {
+		return Tizen.Images.fs.remove( path, { recursive: true } );
+	},
+
+	read: function( path ) {
 		return Tizen.Images.fs.read( path );
 	},
 
-	remove: function( path ) {
-		return Tizen.Images.fs.remove( path, { recursive: true } );
-	}
+	createDirectory: function( path ) {
+		return Tizen.Images.fs.create( path, { type: 'd' } );
+	},
+
+	moveTo: function( from, to ) {
+		return Tizen.Images.fs.rename( from, Tizen.Images.fs.getPath( to ) );
+	},
+
+	rename: function( path, newpath ) {
+		var from = Tizen.Images.fs.getPath( path );
+		var to = Tizen.Images.fs.getPath( newpath );
+		return Tizen.Images.fs.rename( from, to );
+	},
+
 };
 
 

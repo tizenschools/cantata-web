@@ -110,7 +110,15 @@
 			var dialog = new QuestionDialogView( { model: new RemovePhoto( { 'path': path } ) } );
 			dialog.open();
 
-		}
+		},
+
+		getCommand: function( command ) {
+			if ( 'upload' == command ) {
+				return new UploadFile( { url: '/photos', path: this.model.get( 'path' ) } );
+			} else if ( 'newdirectory' == command ) {
+				return new NewDirectory( { path: this.model.get( 'path' ) } );
+			}
+		},
 	} );
 
 	RemovePhoto = Command.extend( {
