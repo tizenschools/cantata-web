@@ -59,21 +59,26 @@
 	View = Backbone.View.extend( {
 		initialize: function( options ) {
 			if ( options && options.defaultTemplate ) {
-				debug( "Default template changed: " + options.defaultTemplate );
+				debug( "Default template changed: {0}", options.defaultTemplate );
 				this.defaultTemplate = options.defaultTemplate;
 			}
 			this.$el.html( this.template( this.model ) );
 		},
-		template: function( model, template ) {
-			var temp = template;
-			if ( this.templateId ) {
-				temp = $( this.templateId ).html();
-				if ( !temp ) {
+		template: function( model, template2 ) {
+			var temp = template2;
+			if ( ! temp ) {
+				if ( this.templateId ) {
+					temp = $( this.templateId ).html();
+					if ( !temp ) {
+						temp = this.defaultTemplate;
+					}
+				} else {
 					temp = this.defaultTemplate;
 				}
 			}
 
 			if ( !temp ) {
+				warn( "No template" );
 				return "";
 			}
 			if ( !model ) {
@@ -87,14 +92,13 @@
 		},
 
 		render: function() {
-			this.$el.html( this.template( this.model ) );
 			return this;
 		},
 
 		addView: function( view, index, target ) {
 			target || (target = this.$el);
 			if ( 0 <= index ) {
-				debug( 'Append ' + index + ' th' );
+				debug( 'Append {0} th', index );
 				var element = view.el;
 				var elName = element.tagName;
 
@@ -114,6 +118,7 @@
 
 	Command = Model.extend( {
 		initialize: function() {
+			_.bindAll( this );
 			if ( !this.execute ) {
 				this.execute = this.get( 'execute' );
 			}
@@ -158,7 +163,7 @@
 		headerTemplate:
 		'<div class="modal-header">' +
 			'<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>' +
-			'<h3>New Category</h3>' +
+			'<h3>Dialog</h3>' +
 		'</div>',
 
 		bodyTemplate:
@@ -167,76 +172,152 @@
 
 		footerTemplate:
 		'<div class="modal-footer">' +
-			'<button id="cancel" class="btn" data-dismiss="modal" aria-hidden="true">Close</button>' +
-			'<button id="ok" class="btn btn-primary">OK</button>' +
 		'</div>',
 
 		className: 'modal hide fade',
 
 		initialize: function( options ) {
-			that = this;
+			_.bindAll( this );
+			this.initializeEvents();
 			this.buttons = {};
-			this.header = this.createHeader();
-			this.body = this.createBody();
-			this.footer = this.createFooter();
+			this.$header = this.createHeader();
+			this.$body = this.createBody();
+			this.$footer = this.createFooter();
+		},
+		initializeEvents: function() {
 		},
 
 		render: function() {
-			this.$el.append( this.header );
-			this.$el.append( this.body );
-			this.$el.append( this.footer );
+			this.$el.append( this.$header );
+			this.$el.append( this.$body );
+			this.$el.append( this.$footer );
 
-			that = this;
+			var that = this;
 			this.$el.modal( {
 				backdrop: 'static',
 				keyboard: false
 			} ).on( 'hidden', function() {
-				that.close();
+				that.remove();
 			} );
 		},
-
+		renderTitle: function() {
+			this.$header.find( 'h3' ).text( this.getTitle() );
+		},
+		getTitle: function() {
+			if ( this.model && this.model.get ) {
+				this.model.bind( 'change', this.setTitle, this );
+				return this.model.get( 'title' );
+			}
+			return this.title;
+		},
 		createHeader: function() {
-			return $( this.template( this.model, this.headerTemplate ) );
+			var ret = $( this.template( this.model, this.headerTemplate ) );
+			ret.find( 'h3' ).text( this.getTitle() );
+			return ret;
 		},
 
 		createBody: function() {
 			var body = $( this.template( this.model, this.bodyTemplate ) );
-			body.append( this.createContents() );
+			var content = this.createContents();
+			if ( content ) {
+				body.append( content );
+			}
 			return body;
 		},
 
 		createFooter: function() {
 			var footer = $( this.template( this.model, this.footerTemplate ) );
-			this.addButton( 'cancel', footer.find( '#cancel' ) );
-			this.addButton( 'ok', footer.find( '#ok' ), this.done );
+			this.addButtons( footer );
 
 			return footer;
 		},
 
-		open: function( callbaack ) {
+		addButtons: function( footer ) {
+			var cancel = $( '<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>' );
+			this.addButton( 'cancel', cancel );
+			footer.append( cancel );
+
+			var ok = $( '<button class="btn btn-primary">OK</button>' );
+			footer.append( ok );
+			this.addButton( 'ok', ok, [ this.done, this.close ] );
+
+
+		},
+
+		open: function( callback ) {
+			if ( callback ) {
+				_.each( this.buttons, function( btn, name ) {
+					btn.button.click( _.bind( function() {
+						callback.call( this, name, this.args );
+					}, this ) );
+				}, this );
+			}
 			this.render();
-			this.callback = callbaack;
 			this.$el.modal( 'show' );
 		},
 
 		addButton: function( name, btn, handler ) {
 			if ( handler ) {
-				btn.click( _.bind( handler, this ) );
+				if ( handler instanceof Array ) {
+					_.each( handler, function( h ) {
+						btn.click( _.bind( function() {
+							h.call( this, this.args );
+						}, this ) );
+					}, this );
+				} else {
+					btn.click( _.bind( function() {
+						handler.call( this, this.args );
+					}, this ) );
+				}
 			}
 			this.buttons[name] = { button: btn, handler: handler };
 		},
 
-		done: function() {
-			if ( that.model && that.model.execute ) {
-				that.model.execute();
+		done: function( args ) {
+			if ( this.model ) {
+				var execute = this.model.execute || this.model.get( 'execute' );
+				if ( execute ) {
+					execute.apply( this.model, args );
+				}
 			}
-
-			that.close();
 		},
 
 		close: function() {
 			this.$el.modal( 'hide' );
-			this.remove();
+		},
+	} );
+
+
+	QuestionDialogView = DialogView.extend( {
+		title: 'Question',
+		createContents: function() {
+			return this.model.get( 'message' );
+		},
+		addButtons: function( footer ) {
+			var no = $( '<button class="btn" data-dismiss="modal" aria-hidden="true">No</button>' );
+			this.addButton( 'no', no );
+			footer.append( no );
+
+			var yes = $( '<button class="btn btn-primary">Yes</button>' );
+			footer.append( yes );
+			this.addButton( 'yes', yes, [ this.done, this.close ] );
+
+		},
+	} );
+
+	InputDialogView = DialogView.extend( {
+		title: 'Input',
+		createContents: function() {
+			var that = this;
+			this.input = $( '<input type="text">' );
+			this.input.blur( function() {
+				that.args = [ that.input.val() ];
+			} );
+			var ret = $( '<div><p id="message"></p></div>' );
+			ret.find( '#message' ).html( this.model.get( 'message' ) );
+			ret.append( this.input );
+			
+			return ret;
 		},
 	} );
 
