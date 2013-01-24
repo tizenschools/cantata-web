@@ -159,62 +159,38 @@
 			} );
 			this.resetFile();
 		},
+		createButton: function( name, execute ) {
+			var btn = new Button( { name: name, model: new Command( { execute: execute } ) } );
+			btn.render();
+			return btn.el;
+		},
 		createFooter: function() {
 			debug( 'Create footer' );
-			that = this;
+			var that = this;
 			this.footer = $( '<div id="footer"></div>' );
-			var toUpBtn = new Button( {
-				name: 'Up',
-				model: new Command( {
-					execute: function() {
-						var path = that.model.get( 'path' );
-						var p = getParentFrom( path );
-						debug( 'Move to up: {0}', p );
-						that.model.set( 'path', p );
-					}
-				} )
-		   	} ).render();
 
-			var newDirectoryBtn = new Button( {
-				name: '+',
-				model: new Command( {
-					execute: function() {
-						var dialog = new InputDialogView( { model: new NewDirectory( {
-							path: that.model.get( 'path' ),
-						} ) } );
-						dialog.open();
-					}
-				} )
-			} ).render();
-
-
-			var uploadBtn = new Button( {
-				name: 'Upload',
-				model: new Command( {
-					execute: function() {
-						var dialog = new UploadDialogView( { model: new Model( {
-							path: that.model.get( 'path' ),
-							execute: function( args ) {
-								trace( 'Args: {0}, Files: {1}', args, args.files );
-
-								var collection = this.get( 'files' );
-								if ( collection ) {
-									collection.each( function( file ) {
-										file.get( 'form' ).submit();
-									} );
-								}
-
-							}
-						} ) } );
-						dialog.open();
-					}
-				} )
-			} );
-
-			this.footer.append( toUpBtn.el );
-			this.footer.append( newDirectoryBtn.el );
-			this.footer.append( uploadBtn.el );
+			this.footer.append( this.createButton( 'Up', function() {
+				var path = that.model.get( 'path' );
+				var p = getParentFrom( path );
+				debug( 'Move to up: {0}', p );
+				that.model.set( 'path', p );
+			} ) );
+			this.footer.append( this.createButton( '+', function() {
+				var dialog = new InputDialogView( { model: that.getCommand( 'newdirectory' ) } );
+				dialog.open();
+			} ) );
+			this.footer.append( this.createButton( 'Upload', function() {
+				var dialog = new UploadDialogView( { model: that.getCommand( 'upload' ) } );
+				dialog.open();
+			} ) );
 			return this.footer;
+		},
+		getCommand: function( command ) {
+			if ( 'upload' == command ) {
+				return new UploadFile( { url: '/files', path: this.model.get( 'path' ) } );
+			} else if ( 'newdirectory' == command ) {
+				return new NewDirectory( { path: this.model.get( 'path' ) } );
+			}
 		},
 		addFile: function( file ) {
 			trace( 'File[{1}]: {0} added', file, file.get( 'path' ) );
@@ -302,6 +278,20 @@
 		}
 	} );
 
+	UploadFile = Command.extend( {
+		execute: function( args ) {
+			trace( 'Args: {0}, Files: {1}', args, args.files );
+
+			var collection = this.get( 'files' );
+			if ( collection ) {
+				collection.each( function( file ) {
+					file.get( 'form' ).submit();
+				} );
+			}
+
+		}
+	} );
+
 	UploadDialogView = DialogView.extend( {
 		title: 'Upload files',
 		templateId: '#uploadForm',
@@ -309,7 +299,7 @@
 			var that = this;
 			this.args = $( this.template( this.model ) );
 			this.args.fileupload( {
-				url: addPath( '/files', this.model.get( 'path' ) ),
+				url: addPath( this.model.get( 'url' ), this.model.get( 'path' ) ),
 				dataType: 'json',
 				add: function( e, data ) {
 					_.each( data.files, function( file ) {
