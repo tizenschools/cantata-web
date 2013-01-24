@@ -25,6 +25,75 @@
 			return ret;
 		},
 	} );
+	MusicFile = File.extend( {
+		defaults: {
+			path: '/'
+		},
+		initialize: function() {
+			_.bindAll( this );
+			app.on( 'musicRemoved', this.removeFile );
+		},
+		url: function() {
+			return addPath( '/musics', this.get( 'path' ) );
+		}
+	} );
+	MusicFiles = Collection.extend( {
+		model: MusicFile,
+		initialize: function( array, options ) {
+			_.bindAll( this );
+			app.on( 'directoryAdded', this.addDirectory );
+			this.parent = options.parent;
+			this.parent.bind( 'destroy', this.destroy, this );
+			this.parent.bind( 'change', this.changed, this );
+		},
+		changed: function() {
+			trace( 'Changed' );
+			if ( this.parent.hasChanged( 'path' ) ) {
+				this.fetch()
+			} else if ( this.parent.hasChanged( 'selection' ) ) {
+				if ( this.selection ) {
+					this.selection.$el.removeClass( 'selection' );
+				}
+				this.selection = this.parent.get( 'selection' );
+				if ( this.selection ) {
+					this.selection.$el.addClass( 'selection' );
+				}
+			}
+		},
+		comparator: function( model ) {
+			return model.get( 'type' ) + model.get( 'name' );
+		},
+		url: function() {
+			ret = '/musics' + this.parent.get( 'path' );
+			debug( 'Request: {0}', ret );
+			return ret;
+		},
+		parse: function( res ) {
+			debug( 'Response: ' + res );
+			ret = [];
+			_.each( res, function( data ) {
+				var file = new MusicFile( { path: addPath( this.parent.get( 'path' ), data['name'] ), name: data['name'], type: data['type'] } );
+				ret.push( file );
+			}, this );
+			return ret;
+		},
+		addDirectory: function( data ) {
+			var parentDir = getParentFrom( data );
+			var name = getFilenameFrom( data );
+
+			if ( this.parent.get( 'path' ) == parentDir ) {
+				var index = this.indexOf( this.find( function( existFile ) {
+					if ( existFile.get( 'type' ) == 'f' ) {
+						return true;
+					}
+
+					return ( name < existFile.get( 'name' ) );
+				} ) );
+				debug( 'Index: {0}', index );
+				this.add( { path: data, name: name, type: 'd' }, { at: index } );
+			}
+		}
+	} );
 
 	MusicPlayerDialogView = WindowView.extend( {
 
@@ -40,6 +109,26 @@
 			this.collection.bind( 'reset', this.resetMusic, this );
 			this.collection.bind( 'add', this.addMusic, this );
 			this.$player = $( this.template( this.model ) );
+		},
+
+		createButton: function( name, execute ) {
+			var btn = new Button( { name: name, model: new Command( { execute: execute } ) } );
+			btn.render();
+			return btn.el;
+		},
+
+		createFooter: function() {
+			debug( 'Create footer' );
+			var that = this;
+			this.footer = $( '<div id="footer"></div>' );
+
+			this.footer.append( this.createButton( 'Music file', function() {
+				var path = new File();
+				var files = new MusicFiles( [], { parent: path } );
+				var dialog = new MusicFilesDialogView( { el: this.get( 'target' ), model: path, collection: files } );
+				dialog.open();
+			} ) );
+			return this.footer;
 		},
 
 		createContents: function() {
@@ -172,5 +261,18 @@
 			info( '{0}: {1}', command, name );
 			this.get( 'musics' ).setName( name );
 		}
+	} );
+
+	MusicFilesDialogView = FilesDialogView.extend( {
+		title: 'Music file',
+		addButtons: function( footer ) {
+			var no = $( '<button class="btn" data-dismiss="modal" aria-hidden="true">No</button>' );
+			this.addButton( 'no', no );
+			footer.append( no );
+
+			var yes = $( '<button class="btn btn-primary">Yes</button>' );
+			footer.append( yes );
+			this.addButton( 'yes', yes, [ this.done, this.close ] );
+		},
 	} );
 } ) ();
