@@ -145,7 +145,7 @@
 			return this.model.get( 'path' );
 		},
 		createContents: function() {
-			this.contents.contextMenu( {
+			this.$body.contextMenu( {
 				selector: '.file.selection',
 				callback: this.handleFile,
 				items: {
@@ -196,7 +196,7 @@
 			trace( 'File[{1}]: {0} added', file, file.get( 'path' ) );
 
 			var view = new FileView( { container: this.model, model: file } ).render();
-			this.contents.append( view.el );
+			this.$body.append( view.el );
 
 		},
 		removeFile: function( file ) {
@@ -204,7 +204,7 @@
 		},
 		resetFile: function() {
 			debug( 'Files reset' );
-			this.contents.empty();
+			this.$body.empty();
 			this.collection.each( function( file ) {
 				this.addFile( file );
 			}, this );

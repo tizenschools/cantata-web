@@ -43,7 +43,7 @@
 		},
 
 		createContents: function() {
-			this.contents.append( this.$player );
+			this.$body.append( this.$player );
 			this.$playList = new jPlayerPlaylist( {
 				jPlayer: '#jp_player',
 				cssSelectorAncestor: '#jp_container'
@@ -132,7 +132,7 @@
 		},
 		createContents: function() {
 			this.collection.fetch();
-			return this.contents = $( '<div></div>' );
+			return null;
 		},
 		openPlaylist: function( e, data ) {
 			var selected = this.$( 'input:checked' );
@@ -153,14 +153,14 @@
 
 		resetPlaylist: function() {
 			debug( 'Playlist reset' );
-			this.contents.empty();
+			this.$body.empty();
 			this.collection.each( function( file ) {
 				this.addPlaylist( file );
 			}, this );
 		},
 		addPlaylist: function( playlist ) {
 			trace( 'Playlist[{0}] added',  playlist.get( 'name' ) );
-			this.contents.append( new MusicPlaylistView( { model: playlist } ).render().el );
+			this.$body.append( new MusicPlaylistView( { model: playlist } ).render().el );
 		},
 
 	} );

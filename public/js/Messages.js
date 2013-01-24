@@ -75,7 +75,7 @@
 		resetSession: function() {
 
 			debug( 'Sessions reset' );
-			this.contents.empty();
+			this.$body.empty();
 			this.collection.each( this.addSession, this );
 
 		},
@@ -83,7 +83,7 @@
 			trace( 'Session[{1}]: {0} added', session, session.get( 'path' ) );
 
 			var view = new MessageSessionView( { model: session } ).render();
-			this.contents.append( view.el );
+			this.$body.append( view.el );
 
 		},
 	} );

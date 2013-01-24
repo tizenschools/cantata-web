@@ -88,7 +88,7 @@
 				resizable: true
 			} );
 
-			this.contents = this.wnd.getFrame().find( '#contents' );
+			this.$body = this.wnd.getFrame().find( '#contents' );
 			this.createContents();
 			info( 'Window: ' + this.wnd );
 			return this;
