@@ -218,7 +218,10 @@
 
 		createBody: function() {
 			var body = $( this.template( this.model, this.bodyTemplate ) );
-			body.append( this.createContents() );
+			var content = this.createContents();
+			if ( content ) {
+				body.append( content );
+			}
 			return body;
 		},
 

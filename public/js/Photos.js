@@ -96,7 +96,7 @@
 			trace( 'File[{1}]: {0} added', file, file.get( 'path' ) );
 
 			photoView = new PhotoView( { container: this.model, model: file } ).render();
-			this.contents.append( photoView.el );
+			this.$body.append( photoView.el );
 
 		},
 		handleFile: function( command, options ) {

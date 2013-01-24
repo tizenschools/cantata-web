@@ -36,7 +36,7 @@
 
             Logger.trace( 'Total: ' + t + ', Usage: ' + u + ', Remain: ' + r );
 
-            this.contents.append( this.$storageChart );
+            this.$body.append( this.$storageChart );
             var data = [['Usage',Number(u)], ['Remain',Number(r)] ];
          
             var chart = $.jqplot('storage-pie', [data], {

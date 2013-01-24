@@ -147,21 +147,16 @@
 					this.categoryViews[options.index].before( categoryView );
 					categoryView.after( contactsView );
 				} else {
-					this.contents.append( categoryView );
-					this.contents.append( contactsView );
+					this.$body.append( categoryView );
+					this.$body.append( contactsView );
 				}
 				this.categoryViews.splice( options.index, 0, categoryView );
 				this.contactsViews.splice( options.index, 0, contactsView );
 			} else {
-				this.contents.append( categoryView );
-				this.contents.append( contactsView );
+				this.$body.append( categoryView );
+				this.$body.append( contactsView );
 				this.categoryViews.push( categoryView );
 				this.contactsViews.push( contactsView );
-			}
-			if ( this.wnd ) {
-				debug( 'refersh' );
-				this.wnd.setContent( this.contents );
-				this.wnd.getFrame().find( '#contacts' ).accordion();
 			}
 		},
 	} );
