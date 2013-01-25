@@ -101,6 +101,10 @@
 
 		templateId: '#music-player-template',
 
+		hideTemplate:
+		'<div>' +
+		'</div>',
+
 		initialize: function() {
 			this.width = 422;
 			this.height = 300;
@@ -110,6 +114,16 @@
 			this.collection.bind( 'add', this.addMusic, this );
 			this.$player = $( this.template( this.model ) );
 		},
+
+        getTitle: function() {
+			return this.title;
+        },
+
+        setTitle: function( title ) {
+        	this.title = title;
+        	this.$header = this.wnd.getHeader();
+        	this.$header.find( '.window_title_text' ).text( this.getTitle() );
+        },
 
 		createButton: function( name, execute ) {
 			var btn = new Button( { name: name, model: new Command( { execute: execute } ) } );
@@ -122,16 +136,35 @@
 			var that = this;
 			this.footer = $( '<div id="footer"></div>' );
 
-			this.footer.append( this.createButton( 'Music file', function() {
-				var path = new File();
-				var files = new MusicFiles( [], { parent: path } );
-				var dialog = new MusicFilesDialogView( { el: this.get( 'target' ), model: path, collection: files } );
-				dialog.open();
-			} ) );
+			this.footer.append( this.createButton( 'Music file', this.changeContents( 'Music file manager' ) ) );
 			return this.footer;
 		},
 
+		changeContents: function( title ) {
+			trace( 'changeContents' );
+
+			// change title
+			this.setTitle( title );
+
+			// change content
+			this.$body.empty();
+			this.$body.append( this.$filesManager.$body );
+
+			// change footer 
+		},
+
 		createContents: function() {
+			// create music file manager contents
+			this.$hideContents = $( this.template( this.model, this.hideTemplate ) );
+			this.$hideContents.hide();
+			this.wnd.getFrame().append( this.$hideContents );
+
+			var path = new File(); // create file content, but not visible
+			var files = new MusicFiles( [], { parent: path } );
+			this.$filesManager = new MusicFilesView( { el: this.$hideContents, model: path, collection: files } );
+			this.$filesManager.render();
+
+			// create music player contents
 			this.$body.append( this.$player );
 			this.$playList = new jPlayerPlaylist( {
 				jPlayer: '#jp_player',
@@ -263,6 +296,37 @@
 		}
 	} );
 
+	MusicFilesView = FilesView.extend( {
+		handleFile: function( command, options ) {
+			info( '{0}: {1}', command, options );
+
+			var selection = this.model.get( 'selection' );
+			if ( ! selection ) {
+				return ;
+			}
+			var path = selection.model.get( 'path' );
+
+			switch( command ) {
+				case 'delete':
+					var dialog = new QuestionDialogView( { model: new RemoveMusicFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+				case 'rename':
+					var dialog = new InputDialogView( { model: new RenameMusicFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+			}
+		},
+
+		getCommand: function( command ) {
+			if ( 'upload' == command ) {
+				return new UploadFile( { url: '/musics', path: this.model.get( 'path' ) } );
+			} else if ( 'newdirectory' == command ) {
+				return new NewDirectory( { path: this.model.get( 'path' ) } );
+			}
+		},
+	} );
+
 	MusicFilesDialogView = FilesDialogView.extend( {
 		title: 'Music file',
 		addButtons: function( footer ) {
@@ -274,5 +338,51 @@
 			footer.append( yes );
 			this.addButton( 'yes', yes, [ this.done, this.close ] );
 		},
+		handleFile: function( command, options ) {
+			info( '{0}: {1}', command, options );
+
+			var selection = this.model.get( 'selection' );
+			if ( ! selection ) {
+				return ;
+			}
+			var path = selection.model.get( 'path' );
+
+			switch( command ) {
+				case 'delete':
+					var dialog = new QuestionDialogView( { model: new RemoveMusicFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+				case 'rename':
+					var dialog = new InputDialogView( { model: new RenameMusicFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+			}
+		}
 	} );
+
+	RemoveMusicFile = Command.extend( {
+		defaults: {
+			'message': 'Do you confirm to remove? ( This can\'t be recovered )'
+		},
+		execute: function() {
+			debug( '>> Remove Music File [{0}]', this.get( 'path' ) );
+			$.ajax( '/musics' + this.get( 'path' ), {
+				type: 'DELETE'
+			} );
+		}
+	} );
+	RenameMusicFile = Command.extend( {
+		defaults: {
+			'message': 'Input new name?'
+		},
+		execute: function( name ) {
+			var path = this.get( 'path' );
+			debug( '>> Rename Music File [{0}] to [{1}]', path, name );
+			$.ajax( addPath( '/musics', this.get( 'path' ) ), {
+				type: 'PUT',
+				data: { newpath: addPath( getParentFrom( path ), name ) }
+			} );
+		}
+	} );
+
 } ) ();
