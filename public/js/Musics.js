@@ -136,15 +136,15 @@
 			var that = this;
 			this.footer = $( '<div id="footer"></div>' );
 
-			this.footer.append( this.createButton( 'Music file', this.changeContents( 'Music file manager' ) ) );
+			this.footer.append( this.createButton( 'Music file', this.changeContents ) );
 			return this.footer;
 		},
 
-		changeContents: function( title ) {
+		changeContents: function() {
 			trace( 'changeContents' );
 
 			// change title
-			this.setTitle( title );
+			this.setTitle( 'Music file manager' );
 
 			// change content
 			this.$body.empty();
