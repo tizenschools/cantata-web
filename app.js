@@ -3,7 +3,7 @@
 // Module dependencies.
 var express = require( 'express' )
 , connect = require( 'connect' )
-, routes = require( './routes/mock' )
+, routes = require( './routes/handle' )
 , user = require( './routes/user' )
 , http = require( 'http' )
 , io = require( 'socket.io' )
@@ -25,14 +25,6 @@ app.configure(function(){
 app.configure( 'development', function() {
 	app.use( express.logger() );
 	app.use( express.errorHandler() );
-	// Insert mockup
-	routes = require( './routes/mock' )
-});
-
-app.configure( 'product', function() {
-	app.use( express.errorHandler() );
-	// Insert mockup
-	routes = require( './routes' )
 });
 
 // Register url mapping
