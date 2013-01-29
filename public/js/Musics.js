@@ -135,25 +135,54 @@
 			debug( 'Create footer' );
 			var that = this;
 			this.footer = $( '<div id="footer"></div>' );
+			this.footer.append( this.createButton( 'Music file', this.changeContentsByMusicFileManager ) );
+			this.footer.append( this.createButton( 'Music player', this.changeContentsByMusicPlayer ) );
+			this.footer.find('.btn:last').hide();
 
-			this.footer.append( this.createButton( 'Music file', this.changeContents ) );
 			return this.footer;
 		},
 
-		changeContents: function() {
-			trace( 'changeContents' );
+		changeContentsByMusicFileManager: function() {
+			trace( 'changeContents music file manager' );
 
 			// change title
 			this.setTitle( 'Music file manager' );
 
 			// change content
-			this.$body.empty();
-			this.$body.append( this.$filesManager.$body );
+			this.$body.hide();
+			this.$body2.show();
+			//this.wnd.getFrame().append( this.$filesManager.$body );
+			//this.$body = this.wnd.getFrame().find( '#contents' );
 
 			// change footer 
+			this.$footerbt1.hide();
+			this.$footerbt2.show();
+			//this.wnd.getFooter().find( '#footer' ).remove();
+			//this.wnd.getFooter().append( this.footer2 );
+		},
+
+		changeContentsByMusicPlayer: function() {
+			trace( 'changeContents music player' );
+
+			// change title
+			this.setTitle( 'Music player' );
+
+			// change content
+			this.$body2.hide();
+			this.$body.show();
+			//this.$body = this.wnd.getFrame().find( '#contents' );
+
+			// change footer 
+			this.$footerbt2.hide();
+			this.$footerbt1.show();
+			//this.wnd.getFooter().find( '#footer' ).remove();
+			//this.wnd.getFooter().append( this.footer );
 		},
 
 		createContents: function() {
+			this.$footerbt1 = this.wnd.getFooter().find('.btn:first');
+			this.$footerbt2 = this.wnd.getFooter().find('.btn:last');
+
 			// create music file manager contents
 			this.$hideContents = $( this.template( this.model, this.hideTemplate ) );
 			this.$hideContents.hide();
@@ -163,6 +192,9 @@
 			var files = new MusicFiles( [], { parent: path } );
 			this.$filesManager = new MusicFilesView( { el: this.$hideContents, model: path, collection: files } );
 			this.$filesManager.render();
+			this.$body2 = this.$filesManager.$body;
+			this.$body2.hide();
+			this.wnd.getFrame().append( this.$body2 );
 
 			// create music player contents
 			this.$body.append( this.$player );
