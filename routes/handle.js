@@ -241,6 +241,8 @@ exports.files.new = function( req, res, next ) {
 	if ( stat.exists() ) {
 		console.log( '[File] Files upload' );
 
+		console.log( stringify( req.files ) );
+
 		if ( Array.isArray( req.files.files ) ) {
 			_.each( req.files.files, function( file ) {
 				var tmpPath = file.path;
@@ -249,14 +251,14 @@ exports.files.new = function( req, res, next ) {
 				tizen.Files.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
 			} );
 			res.end();
-		} else if ( file ) {
-			var tmpPath = file.path;
-			var fileName = file.filename;
+		} else if ( req.files.files ) {
+			var tmpPath = req.files.files.path;
+			var fileName = req.files.files.filename;
 
 			tizen.Files.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
 			res.end();
 		} else {
-			res.end( 500 );
+			res.send( 500 );
 		}
 	} else if ( tizen.Files.createDirectory( path ) ) {
 		console.log( '[File] Directory( ' + stat.getPath() + ' ) created' );

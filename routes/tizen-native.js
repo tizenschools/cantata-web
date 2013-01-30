@@ -122,6 +122,7 @@ Tizen.FS.prototype.getAttribute = Tizen.FS.prototype.getAttribute || function( p
 		return new Tizen.FileAttribute( {
 			type: null,
 			name: Tizen.Util.getFilenameFrom( path ),
+			path: filePath,
 			size: 0
 		} );
 	}
