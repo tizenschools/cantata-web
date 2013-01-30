@@ -125,9 +125,14 @@
         	this.$header.find( '.window_title_text' ).text( this.getTitle() );
         },
 
-		createButton: function( name, execute ) {
+		createButton: function( name, execute, id ) {
 			var btn = new Button( { name: name, model: new Command( { execute: execute } ) } );
 			btn.render();
+
+			if ( id ) {
+				btn.$el.attr( 'id', id );
+			}
+
 			return btn.el;
 		},
 
@@ -135,11 +140,33 @@
 			debug( 'Create footer' );
 			var that = this;
 			this.footer = $( '<div id="footer"></div>' );
-			this.footer.append( this.createButton( 'Music file', this.changeContentsByMusicFileManager ) );
-			this.footer.append( this.createButton( 'Music player', this.changeContentsByMusicPlayer ) );
+			this.footer.append(
+				this.createButton( 
+					'Music file',
+					this.changeContentsByMusicFileManager,
+					'bt-music-file'
+					)
+				);
+			this.footer.append(
+				this.createButton(
+					'Music player',
+					this.changeContentsByMusicPlayer,
+					'bt-music-player'
+					)
+				);
+			this.footer.find('.btn:last').hide();
+
+			this.footer.append( this.createButton( 'Upload', function() {
+				var dialog = new UploadDialogView( { model: that.getCommand( 'upload' ) } );
+				dialog.open();
+			}, 'bt-music-file-upload' ) );
 			this.footer.find('.btn:last').hide();
 
 			return this.footer;
+		},
+
+		getCommand: function( command ) {
+			return this.$filesManager.getCommand( command );
 		},
 
 		changeContentsByMusicFileManager: function() {
@@ -155,8 +182,9 @@
 			//this.$body = this.wnd.getFrame().find( '#contents' );
 
 			// change footer 
-			this.$footerbt1.hide();
-			this.$footerbt2.show();
+			this.$footerbtMusicFile.hide();
+			this.$footerbtMusicPlayer.show();
+			this.$footerbtMusicFileUpload.show();
 			//this.wnd.getFooter().find( '#footer' ).remove();
 			//this.wnd.getFooter().append( this.footer2 );
 		},
@@ -173,15 +201,17 @@
 			//this.$body = this.wnd.getFrame().find( '#contents' );
 
 			// change footer 
-			this.$footerbt2.hide();
-			this.$footerbt1.show();
+			this.$footerbtMusicPlayer.hide();
+			this.$footerbtMusicFileUpload.hide();
+			this.$footerbtMusicFile.show();
 			//this.wnd.getFooter().find( '#footer' ).remove();
 			//this.wnd.getFooter().append( this.footer );
 		},
 
 		createContents: function() {
-			this.$footerbt1 = this.wnd.getFooter().find('.btn:first');
-			this.$footerbt2 = this.wnd.getFooter().find('.btn:last');
+			this.$footerbtMusicFile = this.wnd.getFooter().find('.btn:first');
+			this.$footerbtMusicPlayer = this.wnd.getFooter().find('#bt-music-player');
+			this.$footerbtMusicFileUpload = this.wnd.getFooter().find('#bt-music-file-upload');
 
 			// create music file manager contents
 			this.$hideContents = $( this.template( this.model, this.hideTemplate ) );
@@ -329,6 +359,14 @@
 	} );
 
 	MusicFilesView = FilesView.extend( {
+		initialize: function() {
+			_.bindAll( this );
+			this.model.bind( 'destroy', this.close, this );
+			this.model.bind( 'change', this.pathChanged, this );
+			this.collection.bind( 'reset', this.resetFile, this );
+			this.collection.bind( 'musicAdded', this.addFile, this );
+			this.collection.fetch();
+		},
 		handleFile: function( command, options ) {
 			info( '{0}: {1}', command, options );
 
@@ -353,8 +391,6 @@
 		getCommand: function( command ) {
 			if ( 'upload' == command ) {
 				return new UploadFile( { url: '/musics', path: this.model.get( 'path' ) } );
-			} else if ( 'newdirectory' == command ) {
-				return new NewDirectory( { path: this.model.get( 'path' ) } );
 			}
 		},
 	} );
