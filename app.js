@@ -55,7 +55,7 @@ app.post( '/messages', routes.messages.send );
 // 음악
 app.get( '/musics', routes.musics );
 app.get( /^\/musics(\/.*)/, routes.musics.download );
-app.post( '/musics', routes.musics.new );
+app.post( '/musics', routes.musics.upload ); // music upload
 app.delete( /^\/musics(\/.*)/, routes.musics.remove );
 
 app.get( '/playlists', routes.playlists );

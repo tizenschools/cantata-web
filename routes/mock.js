@@ -108,6 +108,36 @@ exports.musics = function( req, res ) {
 };
 
 exports.musics.upload = function( req, res ) {
+	var path = pickUpFirst( req.params, '/' );
+	console.log( '[Musics] Path : ' + path );
+	var stat = tizen.Musics.getAttribute( path );
+
+	if ( stat.exists() ) {
+		console.log( '[Musics] Files upload' );
+
+		if ( Array.isArray( req.files.files ) ) {
+			_.each( req.files.files, function( file ) {
+				var tmpPath = file.path;
+				var fileName = file.filename;
+
+				tizen.Musics.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
+				context.io.sockets.emit( 'musicAdded', path );
+			} );
+			res.end();
+		} else if ( req.files.files ) {
+			var tmpPath = req.files.files.path;
+			var fileName = req.files.files.filename;
+
+			tizen.Musics.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
+			res.end();
+			context.io.sockets.emit( 'musicAdded', path );
+		} else {
+			res.end( 500 );
+		}
+	} else if ( tizen.Musics.createDirectory( path ) ) {
+		console.log( '[Musics] Directory( ' + stat.getPath() + ' ) created' );
+		context.io.sockets.emit( 'MusicDirectoryAdded', path );
+	}
 };
 
 exports.musics.download = function( req, res ) {
@@ -256,9 +286,9 @@ exports.files.new = function( req, res, next ) {
 				tizen.Files.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
 			} );
 			res.end();
-		} else if ( file ) {
-			var tmpPath = file.path;
-			var fileName = file.filename;
+		} else if ( req.files.files ) {
+			var tmpPath = req.files.files.path;
+			var fileName = req.files.files.filename;
 
 			tizen.Files.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
 			res.end();

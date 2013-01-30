@@ -418,6 +418,15 @@ Tizen.Musics = {
 	getPlaylist: function( name ) {
 		return this.playlist[ name ];
 	},
+
+	moveTo: function( from, to ) {
+		return Tizen.Musics.fs.rename( from, Tizen.Musics.fs.getPath( to ) );
+	},
+	rename: function( path, newpath ) {
+		var from = Tizen.Musics.fs.getPath( path );
+		var to = Tizen.Musics.fs.getPath( newpath );
+		return Tizen.Musics.fs.rename( from, to );
+	},
 };
 
 
