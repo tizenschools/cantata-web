@@ -37,7 +37,8 @@ app.get( '/system/storage', routes.system.storage );
 // 주소록
 app.get( '/contacts', routes.contacts );
 app.post( '/categories', routes.categories.add );
-app.delete( '/categories/:name', routes.categories.remove );
+app.delete( '/categories/:name', routes.categories.remove ); // categories delete
+app.put( '/categories/:name', routes.categories.move ); // categories name change
 
 // 문자
 app.get( '/messages', routes.sessions );

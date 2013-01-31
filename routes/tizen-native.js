@@ -317,6 +317,9 @@ Tizen.Contacts = {
 	removeCategory: function( category, force ) {
 		delete this.model[category];
 	},
+	renameCategory: function( category, newcategory ) {
+		console.log( 'renameCategory: ' + category + ' to ' + newcategory );
+	},
 	findContactWithPhonenumber: function( phonenumber ) {
 		console.log( 'Phonenumber: ' + phonenumber );
 		for( category in this.model ) {

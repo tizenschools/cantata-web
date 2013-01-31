@@ -54,7 +54,6 @@ exports.categories.add = function( req, res ) {
 	context.io.sockets.emit( 'categoryAdded', [ req.body.name ] );
 };
 
-
 exports.categories.remove = function( req, res ) {
 	var name = req.param('name');
 	var force = req.body.force;
@@ -62,6 +61,15 @@ exports.categories.remove = function( req, res ) {
 	console.log( 'Force: ' + force );
 	var contacts = tizen.Contacts.removeCategory( name, force );
 	context.io.sockets.emit( 'categoryRemoved', {'categories':name, 'force':force} );
+};
+
+exports.categories.move = function( req, res ) {
+	var oldName = req.param('name');
+	var newName = req.body.name;
+	console.log( 'OLD Name: ' + oldName );
+	console.log( 'NEW Name: ' + newName );
+	var contacts = tizen.Contacts.renameCategory( oldName, newName );
+	context.io.sockets.emit( 'categoryChanged', {'oldName':oldName, 'newName':newName} );
 };
 
 exports.contacts.add = function( req, res ) {
