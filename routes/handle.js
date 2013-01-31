@@ -11,7 +11,6 @@ remove = function( arr, index ) {
 	console.log( 'after: ' + stringify( arr.slice( index+1 ) ) );
 	console.log( 'before: ' + stringify( arr.slice( 0, index ) ) );
 	var ret = ( index < 0 || arr.length<index )?arr:arr.slice( 0, index ).concat( arr.slice( index + 1 ) );
-	//console.log( 'ret: ' + stringify( ret ) );
 	return ret;
 };
 
@@ -278,6 +277,8 @@ exports.files.new = function( req, res, next ) {
 	if ( stat.exists() ) {
 		console.log( '[File] Files upload' );
 
+		console.log( stringify( req.files ) );
+
 		if ( Array.isArray( req.files.files ) ) {
 			_.each( req.files.files, function( file ) {
 				var tmpPath = file.path;
@@ -293,7 +294,7 @@ exports.files.new = function( req, res, next ) {
 			tizen.Files.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
 			res.end();
 		} else {
-			res.end( 500 );
+			res.send( 500 );
 		}
 	} else if ( tizen.Files.createDirectory( path ) ) {
 		console.log( '[File] Directory( ' + stat.getPath() + ' ) created' );

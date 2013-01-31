@@ -1,16 +1,15 @@
 var _ = require( 'underscore' );
-var util = require( 'util' );
 var fs = require( 'fs' );
 var uuid = require( 'idgen' );
 
 var Tizen = {
 };
 
-Tizen.Util = Tizen.Util || {};
+Tizen.Util = {};
 
 Tizen.Util.endsWith = function( str, checker ) {
 	if ( str != null && checker != null && str.length >= checker.length ) {
-		if( str.substr( str.length - checker.length ).toUpperCase() == checker.toUpperCase() ) {
+		if( str.substr( str.length - checker.length ) == checker ) {
 			return true;
 		} else {
 			return false;
@@ -22,7 +21,7 @@ Tizen.Util.endsWith = function( str, checker ) {
 
 Tizen.Util.startsWith = function( str, checker ) {
 	if ( str != null && checker != null && str.length >= checker.length ) {
-		if ( str.toUpperCase().substr( 0, checker.toUpperCase().length ) == checker.toUpperCase() ) {
+		if ( str.substr( 0, checker.toUpperCase().length ) == checker ) {
 			return true;
 		} else {
 			return false;
@@ -69,7 +68,7 @@ Tizen.System = Tizen.System || function () {
 }
 
 Tizen.System.getPhonenumber = function() {
-	return '0000000000';
+	return '000-0000-0000';
 }
 
 Tizen.System.getStorage = function() {
@@ -87,27 +86,27 @@ Tizen.FS = Tizen.FS || function( base ) {
 	this.base = base;
 };
 
-Tizen.FS.FileAttribute = Tizen.FS.FileAttribute || function( attr ) {
+Tizen.FileAttribute = Tizen.FileAttribute || function( attr ) {
 	this.attr = attr;
 	this.size = attr.size;
 };
 
-Tizen.FS.FileAttribute.prototype.getPath = function() {
+Tizen.FileAttribute.prototype.getPath = function() {
 	return this.attr.path;
 }
 
-Tizen.FS.FileAttribute.prototype.exists = function() {
+Tizen.FileAttribute.prototype.exists = function() {
 	return null != this.attr.type;
 }
 
-Tizen.FS.FileAttribute.prototype.isDirectory = function() {
+Tizen.FileAttribute.prototype.isDirectory = function() {
 	return this.attr.type == 'd';
 };
-Tizen.FS.FileAttribute.prototype.isFile = function() {
+Tizen.FileAttribute.prototype.isFile = function() {
 	return this.attr.type == 'f';
 };
 
-Tizen.FS.FileAttribute.prototype.getName = function() {
+Tizen.FileAttribute.prototype.getName = function() {
 	return this.attr.name;
 };
 
@@ -120,15 +119,16 @@ Tizen.FS.prototype.getAttribute = Tizen.FS.prototype.getAttribute || function( p
 	var filePath = this.getPath( path );
 
 	if ( !fs.existsSync( filePath ) ) {
-		return new Tizen.FS.FileAttribute( {
+		return new Tizen.FileAttribute( {
 			type: null,
 			name: Tizen.Util.getFilenameFrom( path ),
+			path: filePath,
 			size: 0
 		} );
 	}
 
 	var stat = fs.statSync( filePath );
-	return new Tizen.FS.FileAttribute( {
+	return new Tizen.FileAttribute( {
 		type: stat.isDirectory()?'d':'f',
 		name: Tizen.Util.getFilenameFrom( path ),
 		path: filePath,
@@ -335,7 +335,6 @@ Tizen.Contacts = {
 };
 
 
-Tizen.Image = Tizen.Image || function() {};
 
 Tizen.Images = {
 	fs: new Tizen.FS( Tizen.Util.addPath( __dirname, 'test/image' ) ),
