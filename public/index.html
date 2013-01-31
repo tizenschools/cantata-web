@@ -179,14 +179,3 @@
 	</body>
 </html>
 
-<script>
-	var port = (location.port || location.host.split(':')[1] );
-	if ( !port || port.length == 0 ) { portStr = ''; } else { portStr = ':' + port; } {
-		code = '<script src=\"http://'
-		+ (location.host || 'localhost').split(':')[0]
-		+ portStr
-		+ '/livereload.js?snipver=1\"><\\/script>';
-		console.log( code );
-	}
-	document.write( code );
-</script>

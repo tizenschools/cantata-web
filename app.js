@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 // Module dependencies.
-var express = require( 'express' )
-, connect = require( 'connect' )
-, routes = require( './routes/handle' )
-, user = require( './routes/user' )
-, http = require( 'http' )
-, io = require( 'socket.io' )
-, path = require( 'path' );
+var express = require( 'express' ) // Web framework
+, connect = require( 'connect' )	// Server
+, routes = require( './routes/handle' )	// Our implement
+, user = require( './routes/user' )	// Dummy
+, http = require( 'http' )			// Web Server
+, io = require( 'socket.io' )		// Socket.io
+, path = require( 'path' );			// Path 
 
 var app = express();
 
@@ -78,7 +78,7 @@ io = io.listen( http
 // Start socket.io
 io.sockets.on( 'connection', function( socket ) {
 	socket.on( 'message', function( data ) {
-		socket.broadcase.send( data );
+		socket.broadcast.send( data );
 	} );
 
 	socket.on( 'disconnect', function() {

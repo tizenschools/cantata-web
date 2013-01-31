@@ -5,7 +5,7 @@ var uuid = require( 'idgen' );
 var Tizen = {
 };
 
-Tizen.Util = Tizen.Util || {};
+Tizen.Util = {};
 
 Tizen.Util.endsWith = function( str, checker ) {
 	if ( str != null && checker != null && str.length >= checker.length ) {
@@ -68,7 +68,7 @@ Tizen.System = Tizen.System || function () {
 }
 
 Tizen.System.getPhonenumber = function() {
-	return '0000000000';
+	return '000-0000-0000';
 }
 
 Tizen.System.getStorage = function() {

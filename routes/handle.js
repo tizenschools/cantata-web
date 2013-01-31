@@ -11,7 +11,6 @@ remove = function( arr, index ) {
 	console.log( 'after: ' + stringify( arr.slice( index+1 ) ) );
 	console.log( 'before: ' + stringify( arr.slice( 0, index ) ) );
 	var ret = ( index < 0 || arr.length<index )?arr:arr.slice( 0, index ).concat( arr.slice( index + 1 ) );
-	//console.log( 'ret: ' + stringify( ret ) );
 	return ret;
 };
 

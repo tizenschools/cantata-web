@@ -11,7 +11,7 @@
 
 	App = Model.extend( {
 		initialize: function() {
-			that = this;
+			var that = this;
 			var port = (location.port || location.host.split(':')[1] );
 			if ( !port || port.length == 0 ) {
 				portStr = '';
