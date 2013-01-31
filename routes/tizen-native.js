@@ -314,7 +314,7 @@ Tizen.Contacts = {
 	addCategory: function( category ) {
 		this.model[category] = [];
 	},
-	removeCategory: function( category ) {
+	removeCategory: function( category, force ) {
 		delete this.model[category];
 	},
 	findContactWithPhonenumber: function( phonenumber ) {

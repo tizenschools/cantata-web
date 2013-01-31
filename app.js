@@ -2,7 +2,7 @@
 
 // Module dependencies.
 var express = require( 'express' ) // Web framework
-, connect = require( 'connect' )	// Server
+//, connect = require( 'connect' )	// Server
 , routes = require( './routes/handle' )	// Our implement
 , user = require( './routes/user' )	// Dummy
 , http = require( 'http' )			// Web Server
@@ -13,7 +13,7 @@ var app = express();
 
 app.configure(function(){
 	app.set( 'port', process.env.PORT || 3000 );
-	app.use( connect.compress() );
+	app.use( express.compress() );
 	app.use( express.favicon() );
 	app.use( express.logger('dev') );
 	app.use( express.bodyParser() );
@@ -36,8 +36,8 @@ app.get( '/system/storage', routes.system.storage );
 
 // 주소록
 app.get( '/contacts', routes.contacts );
-
 app.post( '/categories', routes.categories.add );
+app.delete( '/categories/:name', routes.categories.remove );
 
 // 문자
 app.get( '/messages', routes.sessions );

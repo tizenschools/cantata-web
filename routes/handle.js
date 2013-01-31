@@ -56,9 +56,12 @@ exports.categories.add = function( req, res ) {
 
 
 exports.categories.remove = function( req, res ) {
-	console.log( 'Name: ' + req.body.name );
-	var contacts = tizen.Contacts.removeCategory( req.body.name );
-	context.io.sockets.emit( 'categoryRemoved', [ req.body.name ] );
+	var name = req.param('name');
+	var force = req.body.force;
+	console.log( 'Name: ' + name );
+	console.log( 'Force: ' + force );
+	var contacts = tizen.Contacts.removeCategory( name, force );
+	context.io.sockets.emit( 'categoryRemoved', {'categories':name, 'force':force} );
 };
 
 exports.contacts.add = function( req, res ) {
