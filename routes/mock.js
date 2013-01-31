@@ -121,7 +121,7 @@ exports.musics.upload = function( req, res ) {
 				var fileName = file.filename;
 
 				tizen.Musics.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
-				context.io.sockets.emit( 'musicAdded', path );
+				context.io.sockets.emit( 'musicAdded', path + fileName );
 			} );
 			res.end();
 		} else if ( req.files.files ) {
@@ -130,7 +130,7 @@ exports.musics.upload = function( req, res ) {
 
 			tizen.Musics.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
 			res.end();
-			context.io.sockets.emit( 'musicAdded', path );
+			context.io.sockets.emit( 'musicAdded', path + fileName );
 		} else {
 			res.end( 500 );
 		}

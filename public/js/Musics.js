@@ -23,7 +23,7 @@
 			} );
 			debug( 'Musics: {0}', JSON.stringify( ret ) );
 			return ret;
-		},
+		}
 	} );
 	MusicFile = File.extend( {
 		defaults: {
@@ -42,6 +42,7 @@
 		initialize: function( array, options ) {
 			_.bindAll( this );
 			app.on( 'directoryAdded', this.addDirectory );
+			app.on( 'musicAdded', this.addFiles );  // collection add --> collection cheange then visw is changing.
 			this.parent = options.parent;
 			this.parent.bind( 'destroy', this.destroy, this );
 			this.parent.bind( 'change', this.changed, this );
@@ -91,6 +92,22 @@
 				} ) );
 				debug( 'Index: {0}', index );
 				this.add( { path: data, name: name, type: 'd' }, { at: index } );
+			}
+		},
+		addFiles: function( data ) {
+			var parentDir = getParentFrom( data );
+			var name = getFilenameFrom( data );
+
+			if ( this.parent.get( 'path' ) == parentDir ) {
+				var index = this.indexOf( this.find( function( existFile ) {
+					if ( existFile.get( 'type' ) == 'f' ) {
+						return true;
+					}
+
+					return ( name < existFile.get( 'name' ) );
+				} ) );
+				debug( 'Index: {0}', index );
+				this.add( { path: data, name: name, type: 'f' }, { at: index } );
 			}
 		}
 	} );
@@ -364,7 +381,7 @@
 			this.model.bind( 'destroy', this.close, this );
 			this.model.bind( 'change', this.pathChanged, this );
 			this.collection.bind( 'reset', this.resetFile, this );
-			this.collection.bind( 'musicAdded', this.addFile, this );
+			this.collection.bind( 'add', this.addFile, this ); // checking collection add, collection added then change view
 			this.collection.fetch();
 		},
 		handleFile: function( command, options ) {
