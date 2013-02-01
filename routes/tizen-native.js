@@ -295,7 +295,10 @@ Tizen.Files = Tizen.Files || {
 
 Tizen.Contacts = {
 	model: {
-		'Friedns': [ {
+		'Friends': [ {
+			"name":"서경석",
+			"phoneNumber": [ "01087281781","000-0000-0001" ]
+		}, {
 			"name":"손태영",
 			"phoneNumber": [ "01093690102","000-0000-0002" ]
 		}, {
@@ -311,14 +314,29 @@ Tizen.Contacts = {
 	list: function() {
 		return this.model;
 	},
+	isExistCategory: function( category ) {
+		return this.list().hasOwnProperty( category );
+	},
 	addCategory: function( category ) {
 		this.model[category] = [];
 	},
 	removeCategory: function( category, force ) {
-		delete this.model[category];
+		console.log( 'removeCategory: ' + category );
+		var list = this.list();
+
+		delete( list[category] );
 	},
 	renameCategory: function( category, newcategory ) {
 		console.log( 'renameCategory: ' + category + ' to ' + newcategory );
+		var list = this.list();
+
+		// change name
+		if ( this.isExistCategory( category ) ) {
+			if ( category !== newcategory ) {
+				list[newcategory] = list[category];
+				delete( list[category] );
+			}
+		}
 	},
 	findContactWithPhonenumber: function( phonenumber ) {
 		console.log( 'Phonenumber: ' + phonenumber );
