@@ -50,8 +50,14 @@ exports.categories = function() {
 
 exports.categories.add = function( req, res ) {
 	console.log( 'Name: ' + req.body.name );
-	var contacts = tizen.Contacts.addCategory( req.body.name );
-	context.io.sockets.emit( 'categoryAdded', [ req.body.name ] );
+	if ( !tizen.Contacts.isExistCategory( req.body.name ) ) {
+		var contacts = tizen.Contacts.addCategory( req.body.name );
+		res.end();
+		context.io.sockets.emit( 'categoryAdded', [ req.body.name ] );
+	} else {
+		res.send( 404, req.body.name + 'is already exist category ' );
+		res.end();
+	}
 };
 
 exports.categories.remove = function( req, res ) {
@@ -59,8 +65,15 @@ exports.categories.remove = function( req, res ) {
 	var force = req.body.force;
 	console.log( 'Name: ' + name );
 	console.log( 'Force: ' + force );
-	var contacts = tizen.Contacts.removeCategory( name, force );
-	context.io.sockets.emit( 'categoryRemoved', {'categories':name, 'force':force} );
+
+	if ( tizen.Contacts.isExistCategory( name ) ) {
+		var contacts = tizen.Contacts.removeCategory( name, force );
+		res.end();
+		context.io.sockets.emit( 'categoryRemoved', {'categories':name, 'force':force} );
+	} else {
+		res.send( 404, req.body.name + 'is not exist category ' );
+		res.end();
+	}
 };
 
 exports.categories.move = function( req, res ) {
@@ -68,8 +81,15 @@ exports.categories.move = function( req, res ) {
 	var newName = req.body.name;
 	console.log( 'OLD Name: ' + oldName );
 	console.log( 'NEW Name: ' + newName );
-	var contacts = tizen.Contacts.renameCategory( oldName, newName );
-	context.io.sockets.emit( 'categoryChanged', {'oldName':oldName, 'newName':newName} );
+
+	if ( tizen.Contacts.isExistCategory( oldName ) ) {
+		var contacts = tizen.Contacts.renameCategory( oldName, newName );
+		res.end();
+		context.io.sockets.emit( 'categoryChanged', {'oldName':oldName, 'newName':newName} );
+	} else {
+		res.send( 404, req.body.name + 'is not exist category ' );
+		res.end();
+	}
 };
 
 exports.contacts.add = function( req, res ) {

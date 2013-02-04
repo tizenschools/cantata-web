@@ -209,7 +209,7 @@
 		execute: function() {
 			$.ajax( {
 				type: 'POST',
-				url: '/categories',
+				url: '/categories/',
 				data: { 'name': this.get( 'name' ) }
 			} );
 
@@ -226,7 +226,7 @@
 			_.each( names, function( name ){
 				$.ajax( {
 					type: 'DELETE',
-					url: '/categories/' + name,
+					url: '/categories/' + name + '/',
 					data: { 'force': true }
 				} );
 				debug( '>> Remove category[{0}]', name );
@@ -244,7 +244,7 @@
 				if ( name.oldName !== name.newName ) {
 					$.ajax( {
 						type: 'PUT',
-						url: '/categories/' + name.oldName,
+						url: '/categories/' + name.oldName + '/',
 						data: { 'name': name.newName }
 					} );
 					debug( '>> Rename category [{0}] to [{1}]', name.oldName, name.newName );

@@ -97,6 +97,7 @@
 			return '';
 		},
 		close: function() {
+			this.dispose();
 			this.wnd.close();
 		}
 	} );
