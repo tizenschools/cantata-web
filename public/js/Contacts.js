@@ -6,6 +6,7 @@
 		initialize: function( options ) {
 			_.bindAll( this );
 			app.on( 'categoryRemoved', this.removeCategory );
+			app.on( 'categoryChanged', this.renameCategory );
 			this.set( 'name', options.name );
 			this.set( 'contacts', new Collection( _.map( options.contacts, function( contact ) {
 				return new Contact( contact );
@@ -20,6 +21,15 @@
 				this.destroy();
 			}
 		},
+		renameCategory: function( args ) {
+			var oldName = args.oldName;
+			var newName = args.newName;
+
+			if ( this.get( 'name' ) === oldName ) {
+				info( '<<< Category renamed: {0} to {1}', oldName, newName );
+				this.set( 'name', newName );
+			}
+		}
 	} );
 
 	Categories = Collection.extend( {
@@ -27,13 +37,7 @@
 		initialize: function() {
 			_.bindAll( this );
 			app.on( 'categoryAdded', this.addCategory );
-			app.on( 'categoryChanged', this.renameCategory );
-			// this.bind( 'remove', this.removeCategory );
 		},
-		// removeCategory: function() {
-		// 	info( '<<< Category removed in Collection, collection reset' );
-		// 	this.reset();
-		// },
 		url: function() {
 			return '/contacts'
 		},
@@ -67,9 +71,6 @@
 				this.add( category, { at: index } );
 			}, this );
 			info( 'Categories: {0}', JSON.stringify( this ) );
-		},
-		renameCategory: function( args ) {
-			info( '<<< Category renamed: {0}', JSON.stringify( args ) );
 		}
 	} );
 
@@ -117,7 +118,8 @@
 			_.bindAll( this );
 			this.collection.bind( 'reset', this.resetCategory, this );
 			this.collection.bind( 'add', this.addCategory, this );
-			this.collection.bind( 'remove', this.removeCategory, this );
+			this.collection.bind( 'remove', this.resetCategory, this );
+			this.collection.bind( 'change:name', this.resetCategory, this );
 			this.collection.fetch();
 		},
 		getCollecion: function() {
@@ -132,17 +134,18 @@
 		createFooter: function() {
 			debug( 'Create footer' );
 			this.footer = $( '<div id="footer"></div>' );
+
+			var that = this;
+
 			var addBtn = new Button( {
 				name: '+',
 				model: new Command( {
 					execute: function() {
-						dialog = new NewCategoryDialogView( { model: new AddNewCategory() } );
+						dialog = new NewCategoryDialogView( { model: new AddNewCategory( { categories: that.collection } ) } );
 						dialog.open();
 					}
 				} )
 		   	} ).render();
-
-		   	var that = this;
 
 			var removeBtn = new Button( {
 				name: 'X',
@@ -158,7 +161,7 @@
 				name: 'R',
 				model: new Command( {
 					execute: function() {
-						dialog = new RenameCategoryDialogView( { model: new RenameCategory() } );
+						dialog = new RenameCategoryDialogView( { model: new RenameCategory( { categories: that.collection } ) } );
 						dialog.open();
 					}
 				} )
@@ -172,6 +175,9 @@
 
 		resetCategory: function() {
 			debug( 'Reset' );
+			this.categoryViews = [];
+			this.contactsViews = [];
+			this.$body.empty();
 			this.collection.each( function( category ) {
 				this.addCategory( category );
 			}, this );
@@ -196,9 +202,6 @@
 				this.categoryViews.push( categoryView );
 				this.contactsViews.push( contactsView );
 			}
-		},
-		removeCategory: function( category, collection, options ) {
-			debug( 'Options: ' + JSON.stringify( options ) );
 		}
 	} );
 
@@ -233,10 +236,20 @@
 
 	RenameCategory = Command.extend( {
 		defaults: {
-			'message': 'Do you confirm to rename? ( This can\'t be recovered )'
+			'message': 'Do you confirm to rename?'
 		},
 		execute: function() {
-			debug( '>> Rename category[{0}]', this.get( 'name' ) );
+			var names = this.get( 'names' );
+			_.each( names, function( name ) {
+				if ( name.oldName !== name.newName ) {
+					$.ajax( {
+						type: 'PUT',
+						url: '/categories/' + name.oldName,
+						data: { 'name': name.newName }
+					} );
+					debug( '>> Rename category [{0}] to [{1}]', name.oldName, name.newName );
+				}
+			} );
 		}
 	} );
 
@@ -261,8 +274,29 @@
 		},
 
 		done: function() {
-			this.model.set( 'name', this.$( 'input' ).val() );
-			DialogView.prototype.done.call( this );
+			this.isExist = false;
+			var that = this;
+
+			this.model.get( 'categories' ).each( function( category ) { 
+				var name = category.get( 'name' );
+
+				if ( name === that.$( 'input').val() ) {
+					that.isExist = true;
+				}
+			} );
+
+			if ( !this.isExist ) {
+				this.model.set( 'name', this.$( 'input' ).val() );
+				DialogView.prototype.done.call( this );
+			} else {
+				alert( '[' + this.$( 'input' ).val() + '] is already exist, please input new name' );
+			}
+		},
+
+		close: function() {
+			if ( !this.isExist ) {
+				this.$el.modal( 'hide' );
+			}
 		},
 
 		onKeypress: function( e ) {
@@ -283,6 +317,9 @@
 	RemoveCategoryDialogView = DialogView.extend( {
 		title: 'Remove Category',
 
+		formTemplate:
+		'<form>{{message}}</form>',
+
 		contentsTemplate:
 		'<p><input type="checkbox" name={{name}}>{{name}}</input></p>',
 
@@ -292,7 +329,7 @@
 
 		done: function() {
 			var names = [];
-			$("input:checkbox:checked").each( function() {
+			$('input:checkbox:checked').each( function() {
 				names.push ( this.name );
 			} );
 			this.model.set( 'names', names );
@@ -311,7 +348,7 @@
 		createContents: function() {
 			console.log( 'RemoveCategoryDialogView create :' + this.model.get( 'categories' ) );
 
-			this.$form = $('<form></form>');
+			this.$form = $( this.template( this.model, this.formTemplate ) );
 			var that = this;
 
 			this.model.get( 'categories' ).each( function( category ) { 
@@ -328,13 +365,47 @@
 	RenameCategoryDialogView = DialogView.extend( {
 		title: 'Rename Category',
 
+		formTemplate:
+		'<form>{{message}}</form>',
+
+		contentsTemplate:
+		'<p>' +
+			'<input type="text" name={{name}} value={{name}}></input>' +
+		'</p>',
+
 		getTitle: function() {
 			return this.title;
 		},
 
 		done: function() {
-			this.model.set( 'name', this.$( 'input' ).val() );
-			DialogView.prototype.done.call( this );
+			this.isExist = false;
+			var names = [];
+			var newNames = [];
+
+			var that = this;
+
+			$( 'input' ).each( function() {
+				newNames.push( this.value );
+				if ( this.name !== this.value ) {
+					names.push( { oldName:this.name, newName:this.value } );
+				}
+				if ( newNames.length != _.uniq( newNames ).length ) {
+					that.isExist = true;
+				}
+			} );
+
+			if ( !this.isExist ) {
+				this.model.set( 'names', names );
+				DialogView.prototype.done.call( this );
+			} else {
+				alert( 'some rename value is duplicate, please input unique name' );
+			}
+		},
+
+		close: function() {
+			if ( !this.isExist ) {
+				this.$el.modal( 'hide' );
+			}
 		},
 
 		onKeypress: function( e ) {
@@ -347,7 +418,19 @@
 		},
 
 		createContents: function() {
-			//return this.template( this.model, this.contentsTemplate );
+			console.log( 'RenameCategoryDialogView create :' + this.model.get( 'categories' ) );
+
+			this.$form = $( this.template( this.model, this.formTemplate ) );
+			var that = this;
+
+			this.model.get( 'categories' ).each( function( category ) { 
+				var name = category.get('name');
+				console.log( "Current Category name : " + name );
+				that.model.set( 'name', name );
+
+				that.$form.append( that.template( that.model, that.contentsTemplate ) );
+			} );
+			return this.$form;
 		}
 	} );
 
