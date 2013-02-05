@@ -61,6 +61,7 @@
 		// -createContentsView
 	} );
 	WindowView = View.extend( {
+		// events: { "click .closeImg": close },
 		getTitle: function() {
 			if ( this.model && this.model.get ) {
 				return this.model.get( 'title' );
@@ -69,8 +70,16 @@
 				return this.title;
 			}
 		},
+
 		initialize: function() {
+			if ( this.collection ) {
+				this.collection.bind( 'destroy', this.close, this );
+			}
+			if ( this.model ) {
+				this.model.bind( 'destroy', this.close, this );
+			}
 		},
+
 		render: function() {
 			$.window.prepare( {
 				dock: 'bottom',
@@ -88,16 +97,29 @@
 				resizable: true
 			} );
 
+			this.$body = this.wnd.getHeader().find( '.closeImg' ).click( this.onClose );
 			this.$body = this.wnd.getFrame().find( '#contents' );
+
 			this.createContents();
 			info( 'Window: ' + this.wnd );
 			return this;
 		},
+		createContents: function() {
+		},
 		createFooter: function() {
 			return '';
 		},
+		onClose: function() {
+			if ( this.model ) {
+				this.model.destroy();
+			}
+
+			if ( this.collection ) {
+				this.collection.destroy();
+			}
+		},
 		close: function() {
-			this.dispose();
+			this.off();
 			this.wnd.close();
 		}
 	} );

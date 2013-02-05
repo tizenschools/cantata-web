@@ -29,6 +29,11 @@
 				info( '<<< Category renamed: {0} to {1}', oldName, newName );
 				this.set( 'name', newName );
 			}
+		},
+		destroy: function() {
+			app.off( 'categoryRemoved', this.removeCategory );
+			app.off( 'categoryChanged', this.renameCategory );
+			Model.prototype.destroy.call( this );
 		}
 	} );
 
@@ -71,6 +76,10 @@
 				this.add( category, { at: index } );
 			}, this );
 			info( 'Categories: {0}', JSON.stringify( this ) );
+		},
+		destroy: function() {
+			app.off( 'categoryAdded', this.addCategory );
+			Collection.prototype.destroy.call( this );
 		}
 	} );
 
@@ -100,15 +109,19 @@
 
 	CategoryView = View.extend( {
 		tagName: 'h3',
-		initialize: function() {},
+		initialize: function() {
+			//this.model.on( 'destroy', this.onClose );
+		},
 		render: function() {
 			var name = this.model.get( 'name' );
 			debug( 'Category: ' + name );
 			this.$el.text( name );
 			this.$el.append( this.name );
 			return this;
+		},
+		onClose: function() {
+			//this.off();
 		}
-
 	} );
 
 	CategoriesView = WindowView.extend( {
@@ -116,11 +129,15 @@
 			this.categoryViews = [];
 			this.contactsViews = [];
 			_.bindAll( this );
+			this.collection.bind( 'destroy', this.close, this );
 			this.collection.bind( 'reset', this.resetCategory, this );
 			this.collection.bind( 'add', this.addCategory, this );
 			this.collection.bind( 'remove', this.resetCategory, this );
 			this.collection.bind( 'change:name', this.resetCategory, this );
 			this.collection.fetch();
+		},
+		close: function() {
+			this.off();
 		},
 		getCollecion: function() {
 			return this.collection;
