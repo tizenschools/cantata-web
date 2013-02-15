@@ -50,15 +50,46 @@ exports.categories = function() {
 
 exports.categories.add = function( req, res ) {
 	console.log( 'Name: ' + req.body.name );
-	var contacts = tizen.Contacts.addCategory( req.body.name );
-	context.io.sockets.emit( 'categoryAdded', [ req.body.name ] );
+	if ( !tizen.Contacts.isExistCategory( req.body.name ) ) {
+		var contacts = tizen.Contacts.addCategory( req.body.name );
+		res.end();
+		context.io.sockets.emit( 'categoryAdded', [ req.body.name ] );
+	} else {
+		res.send( 404, req.body.name + 'is already exist category ' );
+		res.end();
+	}
 };
 
-
 exports.categories.remove = function( req, res ) {
-	console.log( 'Name: ' + req.body.name );
-	var contacts = tizen.Contacts.removeCategory( req.body.name );
-	context.io.sockets.emit( 'categoryRemoved', [ req.body.name ] );
+	var name = req.param('name');
+	var force = req.body.force;
+	console.log( 'Name: ' + name );
+	console.log( 'Force: ' + force );
+
+	if ( tizen.Contacts.isExistCategory( name ) ) {
+		var contacts = tizen.Contacts.removeCategory( name, force );
+		res.end();
+		context.io.sockets.emit( 'categoryRemoved', {'categories':name, 'force':force} );
+	} else {
+		res.send( 404, req.body.name + 'is not exist category ' );
+		res.end();
+	}
+};
+
+exports.categories.move = function( req, res ) {
+	var oldName = req.param('name');
+	var newName = req.body.name;
+	console.log( 'OLD Name: ' + oldName );
+	console.log( 'NEW Name: ' + newName );
+
+	if ( tizen.Contacts.isExistCategory( oldName ) ) {
+		var contacts = tizen.Contacts.renameCategory( oldName, newName );
+		res.end();
+		context.io.sockets.emit( 'categoryChanged', {'oldName':oldName, 'newName':newName} );
+	} else {
+		res.send( 404, req.body.name + 'is not exist category ' );
+		res.end();
+	}
 };
 
 exports.contacts.add = function( req, res ) {
@@ -91,15 +122,52 @@ tizen.Messages.addListener( function() {
 exports.musics = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
 	console.log( '[Music] Path to list: ' + path );
-	var images = tizen.Musics.list( path );
-
-	if ( !images ) {
-		res.send( 403, 'Sorry, unhandled path' );
+	var stat = tizen.Musics.getAttribute( path );
+	if ( stat.isDirectory() ) {
+		var musiclists = tizen.Musics.list( path );
+		if ( !musiclists ) {
+			res.send( 403, 'Sorry, unhandled path' );
+		}
+		res.send( musiclists );
+	} else if ( stat.isFile() ) {
+		console.log( '[Music] ' + path + ' downloaded' );
+		var music = tizen.Music.get( path );
+		res.attachment( tizen.Util.getFilenameFrom( path ) );
+		res.end( music, 'binary' );	
 	}
-	res.send( images );
 };
 
 exports.musics.upload = function( req, res ) {
+	var path = pickUpFirst( req.params, '/' );
+	console.log( '[Musics] Path : ' + path );
+	var stat = tizen.Musics.getAttribute( path );
+
+	if ( stat.exists() ) {
+		console.log( '[Musics] Files upload' );
+
+		if ( Array.isArray( req.files.files ) ) {
+			_.each( req.files.files, function( file ) {
+				var tmpPath = file.path;
+				var fileName = file.filename;
+
+				tizen.Musics.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
+				context.io.sockets.emit( 'musicAdded', path + fileName );
+			} );
+			res.end();
+		} else if ( req.files.files ) {
+			var tmpPath = req.files.files.path;
+			var fileName = req.files.files.filename;
+
+			tizen.Musics.moveTo( tmpPath, tizen.Util.addPath( path, fileName ) );
+			res.end();
+			context.io.sockets.emit( 'musicAdded', path + fileName );
+		} else {
+			res.end( 500 );
+		}
+	} else if ( tizen.Musics.createDirectory( path ) ) {
+		console.log( '[Musics] Directory( ' + stat.getPath() + ' ) created' );
+		context.io.sockets.emit( 'MusicDirectoryAdded', path );
+	}
 };
 
 exports.musics.download = function( req, res ) {

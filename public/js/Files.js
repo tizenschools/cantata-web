@@ -240,6 +240,127 @@
 		}
 	} );
 
+	FilesDialogView = DialogView.extend( {
+		initialize: function() {
+			_.bindAll( this );
+			this.initializeEvents();
+			this.buttons = {};
+			this.$header = this.createHeader();
+			this.$body = this.createBody();
+			this.$content = this.createContents();
+			if ( this.$content ) {
+				this.$body.append( this.$content );
+			}
+			this.$footer = this.createFooter();
+			this.model.bind( 'destroy', this.close, this );
+			this.model.bind( 'change', this.pathChanged, this );
+			this.collection.bind( 'reset', this.resetFile, this );
+			this.collection.bind( 'add', this.addFile, this );
+			this.collection.fetch();
+		},
+		getTitle: function() {
+			return this.model.get( 'path' );
+		},
+		createContents: function() {
+			this.$body.contextMenu( {
+				selector: '.file.selection',
+				callback: this.handleFile,
+				items: {
+					//'paste': { name: 'Paste' },
+					'move': { name: '잘라내기' },
+					'copy': { name: '복사' },
+					'sep1': "---------",
+					'delete': { name: '삭제' },
+					'rename': { name: '이름바꾸기' },
+				}
+			} );
+			this.resetFile();
+		},
+		createBody: function() {
+			var body = $( this.template( this.model, this.bodyTemplate ) );
+			return body;
+		},
+		createButton: function( name, execute ) {
+			var btn = new Button( { name: name, model: new Command( { execute: execute } ) } );
+			btn.render();
+			return btn.el;
+		},
+		createFooter: function() {
+			debug( 'Create footer' );
+			var that = this;
+			this.footer = $( '<div id="footer"></div>' );
+
+			this.footer.append( this.createButton( 'Up', function() {
+				var path = that.model.get( 'path' );
+				var p = getParentFrom( path );
+				debug( 'Move to up: {0}', p );
+				that.model.set( 'path', p );
+			} ) );
+			this.footer.append( this.createButton( '+', function() {
+				var dialog = new InputDialogView( { model: that.getCommand( 'newdirectory' ) } );
+				dialog.open();
+			} ) );
+			this.footer.append( this.createButton( 'Upload', function() {
+				var dialog = new UploadDialogView( { model: that.getCommand( 'upload' ) } );
+				dialog.open();
+			} ) );
+			return this.footer;
+		},
+		getCommand: function( command ) {
+			if ( 'upload' == command ) {
+				return new UploadFile( { url: '/files', path: this.model.get( 'path' ) } );
+			} else if ( 'newdirectory' == command ) {
+				return new NewDirectory( { path: this.model.get( 'path' ) } );
+			}
+		},
+		addFile: function( file ) {
+			trace( 'File[{1}]: {0} added', file, file.get( 'path' ) );
+
+			var view = new FileView( { container: this.model, model: file } ).render();
+			this.$body.append( view.el );
+
+		},
+		removeFile: function( file ) {
+			trace( 'File[{1}]: {0} removed', file, file.get( 'path' ) );
+		},
+		resetFile: function() {
+			debug( 'Files reset' );
+			this.$body.empty();
+			this.collection.each( function( file ) {
+				this.addFile( file );
+			}, this );
+		},
+		pathChanged: function() {
+			if ( ! this.model.hasChanged( 'path' ) ) {
+				return ;
+			}
+
+			if ( this.wnd ) {
+				this.wnd.setTitle( this.getTitle() );
+			}
+		},
+		handleFile: function( command, options ) {
+			info( '{0}: {1}', command, options );
+
+			var selection = this.model.get( 'selection' );
+			if ( ! selection ) {
+				return ;
+			}
+			var path = selection.model.get( 'path' );
+
+			switch( command ) {
+				case 'delete':
+					var dialog = new QuestionDialogView( { model: new RemoveFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+				case 'rename':
+					var dialog = new InputDialogView( { model: new RenameFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+			}
+		}
+	} );
+
 	RemoveFile = Command.extend( {
 		defaults: {
 			'message': 'Do you confirm to remove? ( This can\'t be recovered )'

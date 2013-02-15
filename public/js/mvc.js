@@ -56,6 +56,13 @@
 
 	Model = Backbone.Model.extend( {
 	} );
+
+	Collection = Backbone.Collection.extend( {
+		destroy: function() {
+			this.each( function( model ) { model.destroy(); } );
+		}
+	} );
+
 	View = Backbone.View.extend( {
 		initialize: function( options ) {
 			if ( options && options.defaultTemplate ) {
@@ -114,7 +121,6 @@
 			}
 		},
 	} );
-	Collection = Backbone.Collection.extend( { } );
 
 	Command = Model.extend( {
 		initialize: function() {

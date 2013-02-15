@@ -23,7 +23,93 @@
 			} );
 			debug( 'Musics: {0}', JSON.stringify( ret ) );
 			return ret;
+		}
+	} );
+	MusicFile = File.extend( {
+		defaults: {
+			path: '/'
 		},
+		initialize: function() {
+			_.bindAll( this );
+			app.on( 'musicRemoved', this.removeFile );
+		},
+		url: function() {
+			return addPath( '/musics', this.get( 'path' ) );
+		}
+	} );
+	MusicFiles = Collection.extend( {
+		model: MusicFile,
+		initialize: function( array, options ) {
+			_.bindAll( this );
+			app.on( 'directoryAdded', this.addDirectory );
+			app.on( 'musicAdded', this.addFiles );  // collection add --> collection cheange then visw is changing.
+			this.parent = options.parent;
+			this.parent.bind( 'destroy', this.destroy, this );
+			this.parent.bind( 'change', this.changed, this );
+		},
+		changed: function() {
+			trace( 'Changed' );
+			if ( this.parent.hasChanged( 'path' ) ) {
+				this.fetch()
+			} else if ( this.parent.hasChanged( 'selection' ) ) {
+				if ( this.selection ) {
+					this.selection.$el.removeClass( 'selection' );
+				}
+				this.selection = this.parent.get( 'selection' );
+				if ( this.selection ) {
+					this.selection.$el.addClass( 'selection' );
+				}
+			}
+		},
+		comparator: function( model ) {
+			return model.get( 'type' ) + model.get( 'name' );
+		},
+		url: function() {
+			ret = '/musics' + this.parent.get( 'path' );
+			debug( 'Request: {0}', ret );
+			return ret;
+		},
+		parse: function( res ) {
+			debug( 'Response: ' + res );
+			ret = [];
+			_.each( res, function( data ) {
+				var file = new MusicFile( { path: addPath( this.parent.get( 'path' ), data['name'] ), name: data['name'], type: data['type'] } );
+				ret.push( file );
+			}, this );
+			return ret;
+		},
+		addDirectory: function( data ) {
+			var parentDir = getParentFrom( data );
+			var name = getFilenameFrom( data );
+
+			if ( this.parent.get( 'path' ) == parentDir ) {
+				var index = this.indexOf( this.find( function( existFile ) {
+					if ( existFile.get( 'type' ) == 'f' ) {
+						return true;
+					}
+
+					return ( name < existFile.get( 'name' ) );
+				} ) );
+				debug( 'Index: {0}', index );
+				this.add( { path: data, name: name, type: 'd' }, { at: index } );
+			}
+		},
+		addFiles: function( data ) {
+			var parentDir = getParentFrom( data );
+			var name = getFilenameFrom( data );
+
+			if ( this.parent.get( 'path' ) == parentDir ) {
+				var index = this.indexOf( this.find( function( existFile ) {
+					if ( existFile.get( 'type' ) == 'f' ) {
+						return true;
+					}
+
+					return ( name < existFile.get( 'name' ) );
+				} ) );
+				debug( 'Index: {0}', index );
+				this.add( { path: data, name: name, type: 'f' }, { at: index } );
+			}
+		}
 	} );
 
 	MusicPlayerDialogView = WindowView.extend( {
@@ -31,6 +117,10 @@
 		title: 'Music player',
 
 		templateId: '#music-player-template',
+
+		hideTemplate:
+		'<div>' +
+		'</div>',
 
 		initialize: function() {
 			this.width = 422;
@@ -42,7 +132,118 @@
 			this.$player = $( this.template( this.model ) );
 		},
 
+        getTitle: function() {
+			return this.title;
+        },
+
+        setTitle: function( title ) {
+        	this.title = title;
+        	this.$header = this.wnd.getHeader();
+        	this.$header.find( '.window_title_text' ).text( this.getTitle() );
+        },
+
+		createButton: function( name, execute, id ) {
+			var btn = new Button( { name: name, model: new Command( { execute: execute } ) } );
+			btn.render();
+
+			if ( id ) {
+				btn.$el.attr( 'id', id );
+			}
+
+			return btn.el;
+		},
+
+		createFooter: function() {
+			debug( 'Create footer' );
+			var that = this;
+			this.footer = $( '<div id="footer"></div>' );
+			this.footer.append(
+				this.createButton( 
+					'Music file',
+					this.changeContentsByMusicFileManager,
+					'bt-music-file'
+					)
+				);
+			this.footer.append(
+				this.createButton(
+					'Music player',
+					this.changeContentsByMusicPlayer,
+					'bt-music-player'
+					)
+				);
+			this.footer.find('.btn:last').hide();
+
+			this.footer.append( this.createButton( 'Upload', function() {
+				var dialog = new UploadDialogView( { model: that.getCommand( 'upload' ) } );
+				dialog.open();
+			}, 'bt-music-file-upload' ) );
+			this.footer.find('.btn:last').hide();
+
+			return this.footer;
+		},
+
+		getCommand: function( command ) {
+			return this.$filesManager.getCommand( command );
+		},
+
+		changeContentsByMusicFileManager: function() {
+			trace( 'changeContents music file manager' );
+
+			// change title
+			this.setTitle( 'Music file manager' );
+
+			// change content
+			this.$body.hide();
+			this.$body2.show();
+			//this.wnd.getFrame().append( this.$filesManager.$body );
+			//this.$body = this.wnd.getFrame().find( '#contents' );
+
+			// change footer 
+			this.$footerbtMusicFile.hide();
+			this.$footerbtMusicPlayer.show();
+			this.$footerbtMusicFileUpload.show();
+			//this.wnd.getFooter().find( '#footer' ).remove();
+			//this.wnd.getFooter().append( this.footer2 );
+		},
+
+		changeContentsByMusicPlayer: function() {
+			trace( 'changeContents music player' );
+
+			// change title
+			this.setTitle( 'Music player' );
+
+			// change content
+			this.$body2.hide();
+			this.$body.show();
+			//this.$body = this.wnd.getFrame().find( '#contents' );
+
+			// change footer 
+			this.$footerbtMusicPlayer.hide();
+			this.$footerbtMusicFileUpload.hide();
+			this.$footerbtMusicFile.show();
+			//this.wnd.getFooter().find( '#footer' ).remove();
+			//this.wnd.getFooter().append( this.footer );
+		},
+
 		createContents: function() {
+			this.$footerbtMusicFile = this.wnd.getFooter().find('.btn:first');
+			this.$footerbtMusicPlayer = this.wnd.getFooter().find('#bt-music-player');
+			this.$footerbtMusicFileUpload = this.wnd.getFooter().find('#bt-music-file-upload');
+
+			// create music file manager contents
+			this.$hideContents = $( this.template( this.model, this.hideTemplate ) );
+			this.$hideContents.hide();
+			this.wnd.getFrame().append( this.$hideContents );
+
+			var path = new File(); // create file content, but not visible
+			var files = new MusicFiles( [], { parent: path } );
+			this.$filesManager = new MusicFilesView( { el: this.$hideContents, model: path, collection: files } );
+			this.$filesManager.render();
+			this.$body2 = this.$filesManager.$body;
+			this.$body2.hide();
+			this.wnd.getFrame().append( this.$body2 );
+
+			// create music player contents
 			this.$body.append( this.$player );
 			this.$playList = new jPlayerPlaylist( {
 				jPlayer: '#jp_player',
@@ -173,4 +374,100 @@
 			this.get( 'musics' ).setName( name );
 		}
 	} );
+
+	MusicFilesView = FilesView.extend( {
+		initialize: function() {
+			_.bindAll( this );
+			this.model.bind( 'destroy', this.close, this );
+			this.model.bind( 'change', this.pathChanged, this );
+			this.collection.bind( 'reset', this.resetFile, this );
+			this.collection.bind( 'add', this.addFile, this ); // checking collection add, collection added then change view
+			this.collection.fetch();
+		},
+		handleFile: function( command, options ) {
+			info( '{0}: {1}', command, options );
+
+			var selection = this.model.get( 'selection' );
+			if ( ! selection ) {
+				return ;
+			}
+			var path = selection.model.get( 'path' );
+
+			switch( command ) {
+				case 'delete':
+					var dialog = new QuestionDialogView( { model: new RemoveMusicFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+				case 'rename':
+					var dialog = new InputDialogView( { model: new RenameMusicFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+			}
+		},
+
+		getCommand: function( command ) {
+			if ( 'upload' == command ) {
+				return new UploadFile( { url: '/musics', path: this.model.get( 'path' ) } );
+			}
+		},
+	} );
+
+	MusicFilesDialogView = FilesDialogView.extend( {
+		title: 'Music file',
+		addButtons: function( footer ) {
+			var no = $( '<button class="btn" data-dismiss="modal" aria-hidden="true">No</button>' );
+			this.addButton( 'no', no );
+			footer.append( no );
+
+			var yes = $( '<button class="btn btn-primary">Yes</button>' );
+			footer.append( yes );
+			this.addButton( 'yes', yes, [ this.done, this.close ] );
+		},
+		handleFile: function( command, options ) {
+			info( '{0}: {1}', command, options );
+
+			var selection = this.model.get( 'selection' );
+			if ( ! selection ) {
+				return ;
+			}
+			var path = selection.model.get( 'path' );
+
+			switch( command ) {
+				case 'delete':
+					var dialog = new QuestionDialogView( { model: new RemoveMusicFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+				case 'rename':
+					var dialog = new InputDialogView( { model: new RenameMusicFile( { 'path': path } ) } );
+					dialog.open();
+					break;
+			}
+		}
+	} );
+
+	RemoveMusicFile = Command.extend( {
+		defaults: {
+			'message': 'Do you confirm to remove? ( This can\'t be recovered )'
+		},
+		execute: function() {
+			debug( '>> Remove Music File [{0}]', this.get( 'path' ) );
+			$.ajax( '/musics' + this.get( 'path' ), {
+				type: 'DELETE'
+			} );
+		}
+	} );
+	RenameMusicFile = Command.extend( {
+		defaults: {
+			'message': 'Input new name?'
+		},
+		execute: function( name ) {
+			var path = this.get( 'path' );
+			debug( '>> Rename Music File [{0}] to [{1}]', path, name );
+			$.ajax( addPath( '/musics', this.get( 'path' ) ), {
+				type: 'PUT',
+				data: { newpath: addPath( getParentFrom( path ), name ) }
+			} );
+		}
+	} );
+
 } ) ();

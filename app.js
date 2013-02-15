@@ -2,7 +2,7 @@
 
 // Module dependencies.
 var express = require( 'express' ) // Web framework
-, connect = require( 'connect' )	// Server
+//, connect = require( 'connect' )	// Server
 , routes = require( './routes/handle' )	// Our implement
 , user = require( './routes/user' )	// Dummy
 , http = require( 'http' )			// Web Server
@@ -13,7 +13,7 @@ var app = express();
 
 app.configure(function(){
 	app.set( 'port', process.env.PORT || 3000 );
-	app.use( connect.compress() );
+	app.use( express.compress() );
 	app.use( express.favicon() );
 	app.use( express.logger('dev') );
 	app.use( express.bodyParser() );
@@ -36,8 +36,9 @@ app.get( '/system/storage', routes.system.storage );
 
 // 주소록
 app.get( '/contacts', routes.contacts );
-
 app.post( '/categories', routes.categories.add );
+app.delete( '/categories/:name', routes.categories.remove ); // categories delete
+app.put( '/categories/:name', routes.categories.move ); // categories name change
 
 // 문자
 app.get( '/messages', routes.sessions );
@@ -45,8 +46,9 @@ app.get( '/messages/:mid', routes.messages );
 app.post( '/messages', routes.messages.send );
 
 // 음악
+app.get( '/musics', routes.musics );
 app.get( /^\/musics(\/.*)/, routes.musics.download );
-app.post( '/musics', routes.musics.new );
+app.post( '/musics', routes.musics.upload ); // music upload
 app.delete( /^\/musics(\/.*)/, routes.musics.remove );
 
 app.get( '/playlists', routes.playlists );

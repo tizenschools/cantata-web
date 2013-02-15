@@ -85,7 +85,7 @@
 			var view = new MessageSessionView( { model: session } ).render();
 			this.$body.append( view.el );
 
-		},
+		}
 	} );
 
 
