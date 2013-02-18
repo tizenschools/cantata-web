@@ -225,10 +225,54 @@ exports.playlists.get = function( req, res ) {
 };
 
 /* 사진 관련 기능 */
+/* 사진 관련 기능 */
 exports.photos = function( req, res ) {
-	var path = pickUpFirst( req.params, '/' );
+	action = req.query["action"];
+	
+	// FIXME: for demo!
+	var url = pickUpFirst( req.params, '/' );
+	if (url.indexOf('.') < 0) {
+		action = "list";
+	} else {
+		action = "download";
+	}
+	console.log("action: " + action);
+	
+	switch (action) {
+	  case "list": {
+		  album = req.query["album"];
+		  page = req.query["page"];
+		  page_cnt = req.query["page_cnt"];
+		  img_obj = native.Images.list(album, page, page_cnt);
+		  res.send(stringify(img_obj));
+	      break;
+	  }
+	  case "download": {
+		  var finename = tizen.Util.getFilenameFrom(pickUpFirst( req.params, '' ));
+		  path_obj = native.Images.getPath(finename);
+		  console.log("path_obj: ", path_obj);
+		  if (path_obj.hasOwnProperty("path")) {
+			  full_path = path_obj.path;
+		  } else {
+			  full_path = "unknown.jpg";
+		  }
+          console.log( '[Photo] ' + full_path + ' downloaded' );
+		  var image = tizen.Images.read( full_path);
+		  res.attachment( tizen.Util.getFilenameFrom( full_path ) );
+		  res.end( image, 'binary' );
+
+	      break;
+	  }
+	  default: {
+		  res.send( 'known request' );
+	      break;
+	  }
+	}
+	/*var path = pickUpFirst( req.params, '/' );
+
 	console.log( '[Photo] Path to list: ' + path );
 	var stat = tizen.Images.getAttribute( path );
+
 	if ( stat.isDirectory() ) {
 		res.send( tizen.Images.list( path ) );
 	} else if ( stat.isFile() ) {
@@ -236,9 +280,7 @@ exports.photos = function( req, res ) {
 		var image = tizen.Images.read( path );
 		res.attachment( tizen.Util.getFilenameFrom( path ) );
 		res.end( image, 'binary' );
-	}
-
-
+	}*/
 };
 exports.photos.new = function( req, res ) {
 	var path = pickUpFirst( req.params, '/' );
