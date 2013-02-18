@@ -261,7 +261,8 @@ Tizen.FS.prototype.stream = Tizen.FS.prototype.stream || function( path, start, 
 }
 
 Tizen.Files = Tizen.Files || {
-	fs: new Tizen.FS( Tizen.Util.addPath( __dirname, 'test/file' ) ),
+	//fs: new Tizen.FS( Tizen.Util.addPath( __dirname, 'test/file' ) ),
+	fs: new Tizen.FS( Tizen.Util.addPath( '/opt', 'media' ) ),
 	getAttribute: function( path ) {
 		return Tizen.Files.fs.getAttribute( path );
 	},
@@ -358,7 +359,8 @@ Tizen.Contacts = {
 
 
 Tizen.Images = {
-	fs: new Tizen.FS( Tizen.Util.addPath( __dirname, 'test/image' ) ),
+	//fs: new Tizen.FS( Tizen.Util.addPath( __dirname, 'test/image' ) ),
+	fs: new Tizen.FS( Tizen.Util.addPath( '' ) ),
 	getAttribute: function( path ) {
 		return Tizen.Images.fs.getAttribute( path );
 	},
